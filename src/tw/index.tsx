@@ -1,11 +1,6 @@
-import {
-  useCssElement,
-  useNativeVariable as useFunctionalVariable,
-} from "react-native-css";
-
+import React from "react";
 import { Link as RouterLink } from "expo-router";
 import Animated from "react-native-reanimated";
-import React from "react";
 import {
   View as RNView,
   Text as RNText,
@@ -13,98 +8,54 @@ import {
   ScrollView as RNScrollView,
   TouchableHighlight as RNTouchableHighlight,
   TextInput as RNTextInput,
-  StyleSheet,
 } from "react-native";
 
-export const Link = (
-  props: React.ComponentProps<typeof RouterLink> & { className?: string }
-) => {
-  return useCssElement(RouterLink, props, { className: "style" });
-};
+// Univind handles className → style at build time via the Metro transformer.
+// These wrappers exist solely to add className / contentContainerClassName
+// to the TypeScript types; no runtime CSS processing is needed.
 
-Link.Trigger = RouterLink.Trigger;
-Link.Menu = RouterLink.Menu;
-Link.MenuAction = RouterLink.MenuAction;
-Link.Preview = RouterLink.Preview;
-
-export const useCSSVariable =
-  process.env.EXPO_OS !== "web"
-    ? useFunctionalVariable
-    : (variable: string) => `var(${variable})`;
-
-export type ViewProps = React.ComponentProps<typeof RNView> & {
-  className?: string;
-};
-
-export const View = (props: ViewProps) => {
-  return useCssElement(RNView, props, { className: "style" });
-};
-View.displayName = "CSS(View)";
+export const View = (
+  props: React.ComponentProps<typeof RNView> & { className?: string }
+) => <RNView {...(props as any)} />;
+View.displayName = "View";
 
 export const Text = (
   props: React.ComponentProps<typeof RNText> & { className?: string }
-) => {
-  return useCssElement(RNText, props, { className: "style" });
-};
-Text.displayName = "CSS(Text)";
+) => <RNText {...(props as any)} />;
+Text.displayName = "Text";
+
+export const TextInput = (
+  props: React.ComponentProps<typeof RNTextInput> & { className?: string }
+) => <RNTextInput {...(props as any)} />;
+TextInput.displayName = "TextInput";
+
+export const Pressable = (
+  props: React.ComponentProps<typeof RNPressable> & { className?: string }
+) => <RNPressable {...(props as any)} />;
+Pressable.displayName = "Pressable";
 
 export const ScrollView = (
   props: React.ComponentProps<typeof RNScrollView> & {
     className?: string;
     contentContainerClassName?: string;
   }
-) => {
-  return useCssElement(RNScrollView, props, {
-    className: "style",
-    contentContainerClassName: "contentContainerStyle",
-  });
-};
-ScrollView.displayName = "CSS(ScrollView)";
+) => <RNScrollView {...(props as any)} />;
+ScrollView.displayName = "ScrollView";
 
-export const Pressable = (
-  props: React.ComponentProps<typeof RNPressable> & { className?: string }
-) => {
-  return useCssElement(RNPressable, props, { className: "style" });
-};
-Pressable.displayName = "CSS(Pressable)";
+export const TouchableHighlight = (
+  props: React.ComponentProps<typeof RNTouchableHighlight> & {
+    className?: string;
+  }
+) => <RNTouchableHighlight {...(props as any)} />;
+TouchableHighlight.displayName = "TouchableHighlight";
 
-export const TextInput = (
-  props: React.ComponentProps<typeof RNTextInput> & { className?: string }
-) => {
-  return useCssElement(RNTextInput, props, { className: "style" });
-};
-TextInput.displayName = "CSS(TextInput)";
+export const Link = (
+  props: React.ComponentProps<typeof RouterLink> & { className?: string }
+) => <RouterLink {...(props as any)} />;
 
 export const AnimatedScrollView = (
   props: React.ComponentProps<typeof Animated.ScrollView> & {
     className?: string;
-    contentClassName?: string;
     contentContainerClassName?: string;
   }
-) => {
-  return useCssElement(Animated.ScrollView, props, {
-    className: "style",
-    contentClassName: "contentContainerStyle",
-    contentContainerClassName: "contentContainerStyle",
-  });
-};
-
-function XXTouchableHighlight(
-  props: React.ComponentProps<typeof RNTouchableHighlight>
-) {
-  const { underlayColor, ...style } = StyleSheet.flatten(props.style) || {};
-  return (
-    <RNTouchableHighlight
-      underlayColor={underlayColor as string | undefined}
-      {...props}
-      style={style}
-    />
-  );
-}
-
-export const TouchableHighlight = (
-  props: React.ComponentProps<typeof RNTouchableHighlight>
-) => {
-  return useCssElement(XXTouchableHighlight, props, { className: "style" });
-};
-TouchableHighlight.displayName = "CSS(TouchableHighlight)";
+) => <Animated.ScrollView {...(props as any)} />;

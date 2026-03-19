@@ -1,8 +1,24 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import * as AuthApi from '../api/auth';
 import { router } from 'expo-router';
 import {User} from "@/types";
+
+const storage = {
+  get: (key: string) =>
+    Platform.OS === 'web'
+      ? Promise.resolve(localStorage.getItem(key))
+      : SecureStore.getItemAsync(key),
+  set: (key: string, value: string) =>
+    Platform.OS === 'web'
+      ? Promise.resolve(localStorage.setItem(key, value))
+      : SecureStore.setItemAsync(key, value),
+  delete: (key: string) =>
+    Platform.OS === 'web'
+      ? Promise.resolve(localStorage.removeItem(key))
+      : SecureStore.deleteItemAsync(key),
+};
 
 interface AuthState {
   user: User | null;
@@ -23,7 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   loadUser: async () => {
     try {
-      const token = await SecureStore.getItemAsync('auth_token');
+      const token = await storage.get('auth_token');
       if (!token) {
         set({ isLoading: false });
         return;
@@ -31,26 +47,26 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await AuthApi.me();
       set({ user, token, isAuthenticated: true, isLoading: false });
     } catch {
-      await SecureStore.deleteItemAsync('auth_token');
+      await storage.delete('auth_token');
       set({ isLoading: false });
     }
   },
 
   login: async (email, password) => {
     const { token, user } = await AuthApi.login({ email, password });
-    await SecureStore.setItemAsync('auth_token', token);
+    await storage.set('auth_token', token);
     set({ user, token, isAuthenticated: true });
   },
 
   register: async (data) => {
     const { token, user } = await AuthApi.register(data);
-    await SecureStore.setItemAsync('auth_token', token);
+    await storage.set('auth_token', token);
     set({ user, token, isAuthenticated: true });
   },
 
   logout: async () => {
     await AuthApi.logout();
-    await SecureStore.deleteItemAsync('auth_token');
+    await storage.delete('auth_token');
     set({ user: null, token: null, isAuthenticated: false });
     router.replace('/(auth)/login');
   },

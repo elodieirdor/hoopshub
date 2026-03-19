@@ -1,13 +1,43 @@
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/preflight.css" layer(base);
-@import "tailwindcss/utilities.css";
+@import 'tailwindcss';
+@import 'uniwind';
+
+@layer theme {
+  @theme {
+    /* ── Brand colors ── */
+    --color-orange: #FF5C00;
+    --color-orange-2: #FF7A2B;
+
+    /* ── Backgrounds ── */
+    --color-dark: #0A0A0A;
+    --color-dark-2: #111111;
+    --color-surface: #181818;
+    --color-surface-2: #202020;
+
+    /* ── Text ── */
+    --color-cream: #F0EDE8;
+    --color-muted: #7A7870;
+
+    /* ── Borders ── */
+    --color-border: rgba(255, 255, 255, 0.07);
+
+    /* ── Semantic ── */
+    --color-success: #4ade80;
+    --color-warning: #fbbf24;
+    --color-danger: #f87171;
+
+    /* ── Typography ── */
+    --font-display: "Bebas Neue", sans-serif;
+    --font-sans: "DM Sans", sans-serif;
+  }
+}
 
 @media android {
   :root {
     --font-mono: monospace;
     --font-rounded: normal;
     --font-serif: serif;
-    --font-sans: normal;
+    --font-sans: DMSans_400Regular;
+    --font-display: BebasNeue_400Regular;
   }
 }
 
@@ -15,7 +45,8 @@
   :root {
     --font-mono: ui-monospace;
     --font-serif: ui-serif;
-    --font-sans: system-ui;
     --font-rounded: ui-rounded;
+    --font-sans: DMSans_400Regular;
+    --font-display: BebasNeue_400Regular;
   }
 }
