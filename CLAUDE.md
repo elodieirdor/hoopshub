@@ -14,7 +14,7 @@ HoopsHub NZ is a basketball pickup game finder app for New Zealand. This repo is
 - **Icons**: @expo/vector-icons (Ionicons)
 
 ## API
-- **Local**: `https://hoopshub.au-1.sharedwithexpose.com/api`
+- **Local**: `http://hoopshub-api.test/api`
 - **Auth**: Bearer token via `Authorization` header
 - Token is loaded from SecureStore and attached automatically by the axios interceptor
 
@@ -133,6 +133,14 @@ cancelled: muted  (#7A7870)
 completed: muted  (#7A7870)
 ```
 
+## Groups Feature
+- Groups are recurring pickup communities (e.g. "Saturday Morning Crew at Cowles")
+- A group can be tied to a specific court or be court-agnostic
+- Games can optionally belong to a group — shown on group detail screen
+- Group members get notified when a new game is posted to their group
+- Public groups appear in discovery list, private groups are invite only
+- Owner role shown with a crown/badge on member list
+
 ## Navigation Patterns
 - Use `router.push()` for forward navigation
 - Use `router.back()` for back navigation
@@ -196,5 +204,9 @@ refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} ti
 8. Create game screen
 9. Profile screen
 10. Edit profile screen
-11. Empty states, loading states, error states
-12. Pull to refresh on all lists
+11. Groups list screen (new tab or discovery section)
+12. Group detail screen
+13. Create group screen
+14. Empty states, loading states, error states
+15. Pull to refresh on all lists
+16. 
