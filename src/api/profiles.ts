@@ -1,5 +1,5 @@
 import client from './client';
-import {Profile} from "@/types";
+import { Profile } from '@/types';
 
 export const getProfile = async (id: number) => {
   const res = await client.get<Profile>(`/profiles/${id}`);

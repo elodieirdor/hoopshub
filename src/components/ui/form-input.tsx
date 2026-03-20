@@ -13,9 +13,7 @@ export function FormInput({ label, error, secureTextEntry, ...props }: Props) {
 
   return (
     <View>
-      {label && (
-        <Text className="text-cream font-sans text-sm mb-2">{label}</Text>
-      )}
+      {label && <Text className="text-cream font-sans text-sm mb-2">{label}</Text>}
       <View className="bg-surface rounded-xl flex-row items-center px-4">
         <TextInput
           className="flex-1 text-cream py-4 font-sans text-base"
@@ -25,18 +23,12 @@ export function FormInput({ label, error, secureTextEntry, ...props }: Props) {
           {...props}
         />
         {secureTextEntry && (
-          <Pressable onPress={() => setHidden(h => !h)} className="pl-2">
-            <Ionicons
-              name={hidden ? 'eye-outline' : 'eye-off-outline'}
-              size={20}
-              color="#7A7870"
-            />
+          <Pressable onPress={() => setHidden((h) => !h)} className="pl-2">
+            <Ionicons name={hidden ? 'eye-outline' : 'eye-off-outline'} size={20} color="#7A7870" />
           </Pressable>
         )}
       </View>
-      {error && (
-        <Text className="text-danger text-sm mt-1 font-sans">{error}</Text>
-      )}
+      {error && <Text className="text-danger text-sm mt-1 font-sans">{error}</Text>}
     </View>
   );
 }

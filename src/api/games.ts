@@ -1,5 +1,5 @@
 import client from './client';
-import {Game} from "@/types";
+import { Game } from '@/types';
 
 export const getGames = async (params?: {
   city?: string;
