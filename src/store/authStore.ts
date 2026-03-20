@@ -1,24 +1,8 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
 import * as AuthApi from '../api/auth';
 import { router } from 'expo-router';
-import {User} from "@/types";
-
-const storage = {
-  get: (key: string) =>
-    Platform.OS === 'web'
-      ? Promise.resolve(localStorage.getItem(key))
-      : SecureStore.getItemAsync(key),
-  set: (key: string, value: string) =>
-    Platform.OS === 'web'
-      ? Promise.resolve(localStorage.setItem(key, value))
-      : SecureStore.setItemAsync(key, value),
-  delete: (key: string) =>
-    Platform.OS === 'web'
-      ? Promise.resolve(localStorage.removeItem(key))
-      : SecureStore.deleteItemAsync(key),
-};
+import { User } from '@/types';
+import { storage } from '@/utils/storage';
 
 interface AuthState {
   user: User | null;

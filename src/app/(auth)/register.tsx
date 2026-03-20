@@ -10,14 +10,10 @@ import { useAuthStore } from '@/store/authStore';
 
 const schema = z.object({
   full_name:             z.string().min(2, 'Enter your full name'),
-  email:                 z.string().email('Enter a valid email'),
+  email:                 z.email('Enter a valid email'),
   password:             z.string().min(8, 'Password must be at least 8 characters'),
-  password_confirmation: z.string(),
   skill_level:          z.enum(['beginner', 'intermediate', 'advanced', 'comp']),
   city:                 z.string().optional(),
-}).refine(d => d.password === d.password_confirmation, {
-  message: 'Passwords do not match',
-  path: ['password_confirmation'],
 });
 
 type FormData = z.infer<typeof schema>;
@@ -73,7 +69,7 @@ export default function RegisterScreen() {
             name="full_name"
             render={({ field: { onChange, onBlur, value } }) => (
               <FormInput
-                placeholder="Full name"
+                placeholder="Name"
                 autoCorrect={false}
                 onBlur={onBlur}
                 onChangeText={onChange}
@@ -117,24 +113,6 @@ export default function RegisterScreen() {
                 onChangeText={onChange}
                 value={value}
                 error={errors.password?.message}
-              />
-            )}
-          />
-        </View>
-
-        {/* Confirm password */}
-        <View className="mb-6">
-          <Controller
-            control={control}
-            name="password_confirmation"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <FormInput
-                placeholder="Confirm password"
-                secureTextEntry
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                error={errors.password_confirmation?.message}
               />
             )}
           />

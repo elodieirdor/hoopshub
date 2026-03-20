@@ -2,17 +2,17 @@
 
 A mobile app for finding pickup basketball games and courts near you.
 
-Built with [Expo](https://expo.dev) (React Native), [Expo Router](https://docs.expo.dev/router/introduction), and [NativeWind](https://www.nativewind.dev) for styling.
+Built with [Expo](https://expo.dev) (React Native), [Expo Router](https://docs.expo.dev/router/introduction), and [Uniwind](https://uniwind.dev) for styling.
 
 ## Tech Stack
 
-- **Expo / React Native** — cross-platform mobile (iOS & Android)
+- **Expo / React Native** — cross-platform mobile (iOS, Android, web)
 - **Expo Router** — file-based navigation
-- **NativeWind v5 + Tailwind CSS v4** — utility-first styling via `react-native-css`
+- **Uniwind + Tailwind CSS v4** — utility-first styling for native
 - **Zustand** — global auth state
 - **Axios** — API client
 - **React Hook Form + Zod** — form validation
-- **expo-secure-store** — secure token storage
+- **expo-secure-store** — secure token storage on native (localStorage on web)
 
 ## Project Structure
 
@@ -25,7 +25,7 @@ src/
 ├── api/                 # API layer (auth, courts, games, profiles)
 ├── store/               # Zustand stores (authStore)
 ├── components/          # Shared UI components
-├── tw/                  # CSS-wrapped RN components (View, Text, TextInput, etc.)
+├── tw/                  # className-typed RN component wrappers (View, Text, TextInput, etc.)
 ├── types/               # Shared TypeScript types
 ├── hooks/               # Custom hooks
 ├── constants/           # Theme constants
@@ -40,13 +40,48 @@ src/
    npm install
    ```
 
-2. Start the dev server
+2. Copy the environment file and fill in your API URL
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Start the dev server
 
    ```bash
    npx expo start
    ```
 
-   Then open in an iOS simulator, Android emulator, or on device via [Expo Go](https://expo.dev/go).
+   Then open in an iOS simulator, Android emulator, or on device.
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `EXPO_PUBLIC_API_URL` | ✅ | Base URL of the backend API, including `/api` suffix |
+
+Variables prefixed with `EXPO_PUBLIC_` are inlined at build time and safe to expose to the client. Do **not** put secrets in `EXPO_PUBLIC_` variables.
+
+### EAS Builds
+
+Set environment variables for each build profile in your EAS dashboard or in `eas.json`:
+
+```json
+{
+  "build": {
+    "development": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-staging.hoopshub.com/api"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.hoopshub.com/api"
+      }
+    }
+  }
+}
+```
 
 ## Theme Tokens
 
@@ -65,4 +100,4 @@ Defined in `src/global.css`:
 
 ## Authentication Flow
 
-The root layout (`src/app/_layout.tsx`) restores the session from secure storage on launch and redirects to `/(auth)/login` or `/(tabs)` accordingly. The auth store (`src/store/authStore.ts`) manages login, register, logout, and token persistence via `expo-secure-store`.
+The root layout (`src/app/_layout.tsx`) restores the session from secure storage on launch and redirects to `/(auth)/login` or `/(tabs)` accordingly. The auth store (`src/store/authStore.ts`) manages login, register, logout, and token persistence.

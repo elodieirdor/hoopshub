@@ -5,7 +5,6 @@ export const register = async (data: {
   full_name: string;
   email: string;
   password: string;
-  password_confirmation: string;
   city?: string;
   skill_level?: string;
 }) => {
