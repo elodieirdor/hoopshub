@@ -6,7 +6,7 @@ const client = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
   },
 });
 
@@ -28,7 +28,7 @@ client.interceptors.response.use(
       router.replace('/(auth)/login');
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default client;

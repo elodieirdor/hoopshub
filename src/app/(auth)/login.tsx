@@ -96,11 +96,7 @@ export default function LoginScreen() {
         </View>
 
         {/* API error */}
-        {error && (
-          <Text className="text-danger text-sm mb-4 font-sans text-center">
-            {error}
-          </Text>
-        )}
+        {error && <Text className="text-danger text-sm mb-4 font-sans text-center">{error}</Text>}
 
         {/* Submit button */}
         <Pressable
@@ -116,8 +112,7 @@ export default function LoginScreen() {
         {/* Register link */}
         <Pressable onPress={() => router.push('/(auth)/register')}>
           <Text className="text-muted font-sans text-sm text-center">
-            Don't have an account?{' '}
-            <Text className="text-orange">Register</Text>
+            Don&apos;t have an account? <Text className="text-orange">Register</Text>
           </Text>
         </Pressable>
       </ScrollView>

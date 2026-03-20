@@ -1,5 +1,5 @@
 import client from './client';
-import {User} from "@/types";
+import { User } from '@/types';
 
 export const register = async (data: {
   full_name: string;

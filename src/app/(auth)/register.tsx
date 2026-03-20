@@ -9,20 +9,20 @@ import { FormInput } from '@/components/ui/form-input';
 import { useAuthStore } from '@/store/authStore';
 
 const schema = z.object({
-  full_name:             z.string().min(2, 'Enter your full name'),
-  email:                 z.email('Enter a valid email'),
-  password:             z.string().min(8, 'Password must be at least 8 characters'),
-  skill_level:          z.enum(['beginner', 'intermediate', 'advanced', 'comp']),
-  city:                 z.string().optional(),
+  full_name: z.string().min(2, 'Enter your full name'),
+  email: z.email('Enter a valid email'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  skill_level: z.enum(['beginner', 'intermediate', 'advanced', 'comp']),
+  city: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
 
 const SKILL_LEVELS: { value: FormData['skill_level']; label: string }[] = [
-  { value: 'beginner',     label: 'Beginner' },
+  { value: 'beginner', label: 'Beginner' },
   { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced',     label: 'Advanced' },
-  { value: 'comp',         label: 'Comp' },
+  { value: 'advanced', label: 'Advanced' },
+  { value: 'comp', label: 'Comp' },
 ];
 
 export default function RegisterScreen() {
@@ -174,9 +174,7 @@ export default function RegisterScreen() {
         </View>
 
         {/* API error */}
-        {error && (
-          <Text className="text-danger text-sm mb-4 font-sans text-center">{error}</Text>
-        )}
+        {error && <Text className="text-danger text-sm mb-4 font-sans text-center">{error}</Text>}
 
         {/* Submit */}
         <Pressable
