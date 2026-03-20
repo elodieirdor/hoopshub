@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { View } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text as RNText } from 'react-native';
 import { Marker, Callout } from 'react-native-maps';
-import { Ionicons } from '@expo/vector-icons';
 import { Text, Pressable } from '@/tw';
 import { Court } from '@/types';
 
@@ -13,6 +12,7 @@ interface CourtPinProps {
 
 export function CourtPin({ court, onPress, onCalloutPress }: CourtPinProps) {
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return (
     <Marker
@@ -20,9 +20,12 @@ export function CourtPin({ court, onPress, onCalloutPress }: CourtPinProps) {
       tracksViewChanges={tracksViewChanges}
       onPress={onPress}
     >
-      {/* RN View (not @/tw) — className not supported here */}
       <View
-        onLayout={() => setTracksViewChanges(false)}
+        onLayout={() => {
+          // Small delay so the view is fully painted before we stop tracking
+          if (timer.current) clearTimeout(timer.current);
+          timer.current = setTimeout(() => setTracksViewChanges(false), 300);
+        }}
         style={{
           width: 32,
           height: 32,
@@ -34,7 +37,8 @@ export function CourtPin({ court, onPress, onCalloutPress }: CourtPinProps) {
           justifyContent: 'center',
         }}
       >
-        <Ionicons name="basketball" size={14} color="#fff" />
+        {/* Emoji uses the system font — no custom font loading needed */}
+        <RNText style={{ fontSize: 12, lineHeight: 14 }}>🏀</RNText>
       </View>
 
       <Callout tooltip={false}>
