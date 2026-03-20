@@ -1,8 +1,9 @@
 import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
+import { storage } from '@/utils/storage';
 
 const client = axios.create({
-  baseURL: 'http://hoopshub-api.test/api',
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -11,19 +12,20 @@ const client = axios.create({
 
 // Attach token to every request
 client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  const token = await SecureStore.getItemAsync('auth_token');
+  const token = await storage.get('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Handle 401s globally
+// Handle 401s globally — clear token and redirect to login
 client.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: unknown) => {
     if ((error as { response?: { status?: number } }).response?.status === 401) {
-      await SecureStore.deleteItemAsync('auth_token');
+      await storage.delete('auth_token');
+      router.replace('/(auth)/login');
     }
     return Promise.reject(error);
   }

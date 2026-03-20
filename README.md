@@ -1,8 +1,38 @@
-# Welcome to your Expo app 👋
+# HoopsHub
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile app for finding pickup basketball games and courts near you.
 
-## Get started
+Built with [Expo](https://expo.dev) (React Native), [Expo Router](https://docs.expo.dev/router/introduction), and [Uniwind](https://uniwind.dev) for styling.
+
+## Tech Stack
+
+- **Expo / React Native** — cross-platform mobile (iOS, Android, web)
+- **Expo Router** — file-based navigation
+- **Uniwind + Tailwind CSS v4** — utility-first styling for native
+- **Zustand** — global auth state
+- **Axios** — API client
+- **React Hook Form + Zod** — form validation
+- **expo-secure-store** — secure token storage on native (localStorage on web)
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── (auth)/          # Unauthenticated screens (login, register)
+│   ├── (tabs)/          # Authenticated tab screens (home, explore, courts, games, profile)
+│   └── _layout.tsx      # Root layout — font loading, auth guard, splash screen
+├── api/                 # API layer (auth, courts, games, profiles)
+├── store/               # Zustand stores (authStore)
+├── components/          # Shared UI components
+├── tw/                  # className-typed RN component wrappers (View, Text, TextInput, etc.)
+├── types/               # Shared TypeScript types
+├── hooks/               # Custom hooks
+├── constants/           # Theme constants
+└── global.css           # Tailwind theme tokens (colors, fonts)
+```
+
+## Getting Started
 
 1. Install dependencies
 
@@ -10,41 +40,64 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Copy the environment file and fill in your API URL
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Start the dev server
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+   Then open in an iOS simulator, Android emulator, or on device.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Environment Variables
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+| Variable | Required | Description |
+|---|---|---|
+| `EXPO_PUBLIC_API_URL` | ✅ | Base URL of the backend API, including `/api` suffix |
 
-## Get a fresh project
+Variables prefixed with `EXPO_PUBLIC_` are inlined at build time and safe to expose to the client. Do **not** put secrets in `EXPO_PUBLIC_` variables.
 
-When you're ready, run:
+### EAS Builds
 
-```bash
-npm run reset-project
+Set environment variables for each build profile in your EAS dashboard or in `eas.json`:
+
+```json
+{
+  "build": {
+    "development": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-staging.hoopshub.com/api"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.hoopshub.com/api"
+      }
+    }
+  }
+}
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Theme Tokens
 
-## Learn more
+Defined in `src/global.css`:
 
-To learn more about developing your project with Expo, look at the following resources:
+| Token | Value |
+|---|---|
+| `bg-dark` | `#0A0A0A` |
+| `bg-surface` | `#181818` |
+| `text-cream` | `#F0EDE8` |
+| `text-orange` | `#FF5C00` |
+| `text-muted` | `#7A7870` |
+| `text-danger` | `#f87171` |
+| `font-display` | Bebas Neue |
+| `font-sans` | DM Sans |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Authentication Flow
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The root layout (`src/app/_layout.tsx`) restores the session from secure storage on launch and redirects to `/(auth)/login` or `/(tabs)` accordingly. The auth store (`src/store/authStore.ts`) manages login, register, logout, and token persistence.
