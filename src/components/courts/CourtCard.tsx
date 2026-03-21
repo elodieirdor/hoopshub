@@ -3,6 +3,7 @@ import { View, Text, Pressable } from '@/tw';
 import { Ionicons } from '@expo/vector-icons';
 import { Court } from '@/types';
 import CourtIcon from './CourtIcon';
+import { formatDistance } from '@/utils/geo';
 
 interface CourtCardProps {
   court: Court;
@@ -32,10 +33,6 @@ function Badge({ label, icon, bg, color }: BadgeProps) {
   );
 }
 
-function formatDistance(km: number): string {
-  return `${km.toFixed(1)} km`;
-}
-
 export function CourtCard({ court, onPress, distance, highlighted }: CourtCardProps) {
   return (
     <Pressable
@@ -52,10 +49,7 @@ export function CourtCard({ court, onPress, distance, highlighted }: CourtCardPr
         <View className="flex-1">
           {/* Name + distance */}
           <View className="flex-row items-start justify-between mb-0.5">
-            <Text
-              className="font-display text-cream text-lg flex-1 mr-2"
-              numberOfLines={1}
-            >
+            <Text className="font-display text-cream text-lg flex-1 mr-2" numberOfLines={1}>
               {court.name}
             </Text>
             {distance != null && (

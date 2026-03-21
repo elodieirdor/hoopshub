@@ -53,8 +53,7 @@ export default function CourtDetailScreen() {
           allGames
             .filter((g) => g.court_id === Number(id))
             .filter(
-              (g) =>
-                ['open', 'full'].includes(g.status) && new Date(g.starts_at) > new Date(),
+              (g) => ['open', 'full'].includes(g.status) && new Date(g.starts_at) > new Date(),
             ),
         );
       } catch {
@@ -72,7 +71,14 @@ export default function CourtDetailScreen() {
 
   if (loading || !court) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0A', justifyContent: 'center', alignItems: 'center' }}>
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: '#0A0A0A',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
         <Text className="text-muted font-sans">Loading…</Text>
       </SafeAreaView>
     );
@@ -83,16 +89,19 @@ export default function CourtDetailScreen() {
       {/* Back header */}
       <Pressable
         onPress={() => router.back()}
-        style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+        style={{
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+        }}
       >
         <Ionicons name="arrow-back" size={20} color="#F0EDE8" />
         <Text className="text-cream font-sans">Courts</Text>
       </Pressable>
 
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: 32 }}
-      >
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 32 }}>
         {/* Static mini map */}
         <MapView
           style={{ height: 180 }}
@@ -116,7 +125,10 @@ export default function CourtDetailScreen() {
           <Text className="font-display text-4xl text-cream mb-1">{court.name}</Text>
 
           {/* Address + directions */}
-          <Pressable onPress={openDirections} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 16 }}>
+          <Pressable
+            onPress={openDirections}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 16 }}
+          >
             <Ionicons name="location-outline" size={14} color="#7A7870" />
             <Text className="text-muted font-sans text-sm">{court.address}</Text>
             <Text className="text-orange font-sans text-sm" style={{ marginLeft: 4 }}>

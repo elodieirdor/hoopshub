@@ -19,6 +19,7 @@ import { getCourts } from '@/api/courts';
 import { useAuthStore } from '@/store/authStore';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { Court } from '@/types';
+import { haversineKm, formatDistance } from '@/utils/geo';
 
 type FilterKey = 'all' | 'outdoor' | 'indoor' | 'full_court' | 'lit' | 'free';
 
@@ -35,18 +36,6 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 // Three snap points: hidden / default 35% / expanded 65%
 const SNAP_POINTS = [0, SCREEN_HEIGHT * 0.35, SCREEN_HEIGHT * 0.65] as const;
 type SnapIndex = 0 | 1 | 2;
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 export default function CourtsScreen() {
   const router = useRouter();
@@ -312,10 +301,22 @@ export default function CourtsScreen() {
                     <Pressable
                       key={f.key}
                       onPress={() => setActiveFilter(f.key)}
-                      className={active ? 'bg-orange rounded-full px-3 py-1.5' : 'bg-surface rounded-full px-3 py-1.5'}
-                      style={active ? undefined : { borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)' }}
+                      className={
+                        active
+                          ? 'bg-orange rounded-full px-3 py-1.5'
+                          : 'bg-surface rounded-full px-3 py-1.5'
+                      }
+                      style={
+                        active
+                          ? undefined
+                          : { borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)' }
+                      }
                     >
-                      <Text className={active ? 'text-xs font-sans text-cream' : 'text-xs font-sans text-muted'}>
+                      <Text
+                        className={
+                          active ? 'text-xs font-sans text-cream' : 'text-xs font-sans text-muted'
+                        }
+                      >
                         {f.label}
                       </Text>
                     </Pressable>
@@ -324,7 +325,11 @@ export default function CourtsScreen() {
               </ScrollView>
             </View>
           }
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 16, gap: 12 }}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: insets.bottom + 16,
+            gap: 12,
+          }}
           onScrollToIndexFailed={({ index }) => {
             setTimeout(() => {
               listRef.current?.scrollToIndex({ index, animated: true, viewOffset: 8 });

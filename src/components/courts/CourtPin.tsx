@@ -46,12 +46,8 @@ export function CourtPin({ court, onPress, onCalloutPress }: CourtPinProps) {
           <Text className="font-display text-base" style={{ color: '#111' }}>
             {court.name}
           </Text>
-          <Text className="font-sans text-xs text-muted">
-            {court.address}
-          </Text>
-          <Text className="font-sans text-xs text-orange mt-1">
-            View court →
-          </Text>
+          <Text className="font-sans text-xs text-muted">{court.address}</Text>
+          <Text className="font-sans text-xs text-orange mt-1">View court →</Text>
         </Pressable>
       </Callout>
     </Marker>

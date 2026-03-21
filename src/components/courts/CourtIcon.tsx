@@ -29,44 +29,58 @@ export default function CourtIcon({ court }: Props) {
       {isFullCourt ? (
         <Svg width={34} height={26} viewBox="0 0 34 26">
           {/* Outer boundary */}
-          <Rect x="1" y="1" width="32" height="24" rx="2"
-            stroke={color} strokeWidth="1.5" fill="none" />
+          <Rect
+            x="1"
+            y="1"
+            width="32"
+            height="24"
+            rx="2"
+            stroke={color}
+            strokeWidth="1.5"
+            fill="none"
+          />
           {/* Centre line */}
-          <Line x1="17" y1="1" x2="17" y2="25"
-            stroke={color} strokeWidth="1" />
+          <Line x1="17" y1="1" x2="17" y2="25" stroke={color} strokeWidth="1" />
           {/* Centre circle */}
-          <Circle cx="17" cy="13" r="4"
-            stroke={color} strokeWidth="1" fill="none" />
+          <Circle cx="17" cy="13" r="4" stroke={color} strokeWidth="1" fill="none" />
           {/* Left key */}
-          <Rect x="1" y="8" width="8" height="10"
-            stroke={color} strokeWidth="1" fill="none" />
+          <Rect x="1" y="8" width="8" height="10" stroke={color} strokeWidth="1" fill="none" />
           {/* Right key */}
-          <Rect x="25" y="8" width="8" height="10"
-            stroke={color} strokeWidth="1" fill="none" />
+          <Rect x="25" y="8" width="8" height="10" stroke={color} strokeWidth="1" fill="none" />
           {/* Left arc */}
-          <Path d="M 9 8 Q 14 13 9 18"
-            stroke={color} strokeWidth="1" fill="none" />
+          <Path d="M 9 8 Q 14 13 9 18" stroke={color} strokeWidth="1" fill="none" />
           {/* Right arc */}
-          <Path d="M 25 8 Q 20 13 25 18"
-            stroke={color} strokeWidth="1" fill="none" />
+          <Path d="M 25 8 Q 20 13 25 18" stroke={color} strokeWidth="1" fill="none" />
         </Svg>
       ) : (
         <Svg width={34} height={26} viewBox="0 0 34 26">
           {/* Outer boundary */}
-          <Rect x="1" y="1" width="32" height="24" rx="2"
-            stroke={color} strokeWidth="1.5" fill="none" />
+          <Rect
+            x="1"
+            y="1"
+            width="32"
+            height="24"
+            rx="2"
+            stroke={color}
+            strokeWidth="1.5"
+            fill="none"
+          />
           {/* Half court line — dashed */}
-          <Line x1="17" y1="1" x2="17" y2="25"
-            stroke={color} strokeWidth="1" strokeDasharray="2 2" />
+          <Line
+            x1="17"
+            y1="1"
+            x2="17"
+            y2="25"
+            stroke={color}
+            strokeWidth="1"
+            strokeDasharray="2 2"
+          />
           {/* Key — left side only */}
-          <Rect x="1" y="8" width="8" height="10"
-            stroke={color} strokeWidth="1" fill="none" />
+          <Rect x="1" y="8" width="8" height="10" stroke={color} strokeWidth="1" fill="none" />
           {/* Arc */}
-          <Path d="M 9 8 Q 14 13 9 18"
-            stroke={color} strokeWidth="1" fill="none" />
+          <Path d="M 9 8 Q 14 13 9 18" stroke={color} strokeWidth="1" fill="none" />
           {/* Centre half-circle */}
-          <Path d="M 17 9 Q 22 13 17 17"
-            stroke={color} strokeWidth="1" fill="none" />
+          <Path d="M 17 9 Q 22 13 17 17" stroke={color} strokeWidth="1" fill="none" />
         </Svg>
       )}
     </View>
