@@ -6,20 +6,23 @@ import {
   TextInput as RNTextInput,
   Animated,
   PanResponder,
+  View,
+  Text,
+  Pressable,
+  ScrollView,
 } from 'react-native';
 import MapView from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, Pressable, ScrollView } from '@/tw';
 import { CourtPin } from '@/components/courts/CourtPin';
 import { CourtCard } from '@/components/courts/CourtCard';
 import { getCourts } from '@/api/courts';
 import { useAuthStore } from '@/store/authStore';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { Court } from '@/types';
-import { haversineKm, formatDistance } from '@/utils/geo';
+import { haversineKm } from '@/utils/geo';
 
 type FilterKey = 'all' | 'outdoor' | 'indoor' | 'full_court' | 'lit' | 'free';
 
@@ -191,7 +194,7 @@ export default function CourtsScreen() {
             longitudeDelta: 0.05,
           }}
           showsUserLocation
-          showsMyLocationButton={false}
+          showsMyLocationButton={true}
           userInterfaceStyle="dark"
         >
           {filtered.map((c) => (

@@ -3,7 +3,7 @@ import { SafeAreaView, ScrollView, Linking } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, Pressable } from '@/tw';
+import { View, Text, Pressable } from 'react-native';
 import { getCourt } from '@/api/courts';
 import { getGames } from '@/api/games';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';

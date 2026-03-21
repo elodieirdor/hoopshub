@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable } from '@/tw';
+import { View, Text } from 'react-native';
+import { PressableScale } from 'pressto';
 import { Ionicons } from '@expo/vector-icons';
 import { Court } from '@/types';
 import CourtIcon from './CourtIcon';
@@ -35,7 +36,7 @@ function Badge({ label, icon, bg, color }: BadgeProps) {
 
 export function CourtCard({ court, onPress, distance, highlighted }: CourtCardProps) {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       className="bg-surface rounded-xl p-4"
       style={{
@@ -88,6 +89,6 @@ export function CourtCard({ court, onPress, distance, highlighted }: CourtCardPr
           </View>
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }

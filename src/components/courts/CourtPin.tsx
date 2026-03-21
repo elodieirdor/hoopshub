@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { View, Text as RNText } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { Marker, Callout } from 'react-native-maps';
-import { Text, Pressable } from '@/tw';
 import { Court } from '@/types';
 
 interface CourtPinProps {
@@ -38,7 +37,7 @@ export function CourtPin({ court, onPress, onCalloutPress }: CourtPinProps) {
         }}
       >
         {/* Emoji uses the system font — no custom font loading needed */}
-        <RNText style={{ fontSize: 12, lineHeight: 14 }}>🏀</RNText>
+        <Text style={{ fontSize: 12, lineHeight: 14 }}>🏀</Text>
       </View>
 
       <Callout tooltip={false}>
