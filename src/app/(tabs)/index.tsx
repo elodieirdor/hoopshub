@@ -23,6 +23,12 @@ import { useAuthStore } from '@/store/authStore';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { Court } from '@/types';
 import { haversineKm } from '@/utils/geo';
+import CourtCardSkeleton from '@/components/courts/CourtCardSkeleton';
+import MapSkeleton from '@/components/courts/MapSkeleton';
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+const SKELETON_COUNT = 5;
 
 type FilterKey = 'all' | 'outdoor' | 'indoor' | 'full_court' | 'lit' | 'free';
 
@@ -138,11 +144,21 @@ export default function CourtsScreen() {
   // ── Filtered + sorted list ────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let result = courts;
-    if (activeFilter === 'outdoor') result = result.filter((c) => c.court_type === 'outdoor');
-    if (activeFilter === 'indoor') result = result.filter((c) => c.court_type === 'indoor');
-    if (activeFilter === 'full_court') result = result.filter((c) => c.full_court === true);
-    if (activeFilter === 'lit') result = result.filter((c) => c.lit);
-    if (activeFilter === 'free') result = result.filter((c) => c.is_free);
+    if (activeFilter === 'outdoor') {
+      result = result.filter((c) => c.court_type === 'outdoor');
+    }
+    if (activeFilter === 'indoor') {
+      result = result.filter((c) => c.court_type === 'indoor');
+    }
+    if (activeFilter === 'full_court') {
+      result = result.filter((c) => c.full_court === true);
+    }
+    if (activeFilter === 'lit') {
+      result = result.filter((c) => c.lit);
+    }
+    if (activeFilter === 'free') {
+      result = result.filter((c) => c.is_free);
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -182,7 +198,7 @@ export default function CourtsScreen() {
   return (
     <View className="flex-1 bg-dark">
       {/* Map */}
-      <Animated.View style={{ height: mapHeight, overflow: 'hidden' }}>
+      <Animated.View style={{ height: mapHeight }}>
         <MapView
           ref={mapRef}
           style={{ flex: 1 }}
@@ -193,6 +209,8 @@ export default function CourtsScreen() {
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}
+          scrollEnabled
+          zoomEnabled
           showsUserLocation
           showsMyLocationButton={true}
           userInterfaceStyle="dark"
@@ -206,6 +224,7 @@ export default function CourtsScreen() {
             />
           ))}
         </MapView>
+        {loading && <MapSkeleton />}
       </Animated.View>
 
       {/* Drag handle */}
@@ -282,7 +301,7 @@ export default function CourtsScreen() {
               {/* Nearby courts row */}
               <View className="flex-row items-baseline justify-between mb-2.5">
                 <View className="flex-row items-baseline gap-1.5">
-                  <Text className="font-display text-cream text-lg">NEARBY COURTS</Text>
+                  <Text className="font-display text-cream text-lg my-1">NEARBY COURTS</Text>
                   <Text className="font-sans text-muted text-sm">({filtered.length})</Text>
                 </View>
                 <Pressable onPress={handleSeeAll}>
@@ -342,7 +361,13 @@ export default function CourtsScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF5C00" />
           }
           ListEmptyComponent={
-            loading ? null : (
+            loading ? (
+              <View style={{ gap: 12 }}>
+                {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                  <CourtCardSkeleton key={i} />
+                ))}
+              </View>
+            ) : (
               <Text className="text-muted text-center font-sans mt-8">No courts found</Text>
             )
           }
