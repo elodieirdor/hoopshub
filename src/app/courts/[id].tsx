@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, ScrollView, Linking } from 'react-native';
+import { ScrollView, Linking, View, Text, Pressable } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, Pressable } from 'react-native';
 import { getCourt } from '@/api/courts';
 import { getGames } from '@/api/games';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
@@ -11,15 +10,10 @@ import { Court, Game } from '@/types';
 
 function Badge({ label, color }: { label: string; color: string }) {
   return (
-    <View
-      style={{
-        backgroundColor: color + '22',
-        borderRadius: 6,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-      }}
-    >
-      <Text style={{ color, fontSize: 12, fontFamily: 'DMSans_400Regular' }}>{label}</Text>
+    <View className="rounded-md px-2 py-[3px]" style={{ backgroundColor: color + '22' }}>
+      <Text className="text-xs font-sans" style={{ color }}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -71,32 +65,16 @@ export default function CourtDetailScreen() {
 
   if (loading || !court) {
     return (
-      <SafeAreaView
-        style={{
-          flex: 1,
-          backgroundColor: '#0A0A0A',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
+      <View className="flex-1 bg-dark justify-center items-center">
         <Text className="text-muted font-sans">Loading…</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0A' }}>
+    <View className="flex-1 bg-dark">
       {/* Back header */}
-      <Pressable
-        onPress={() => router.back()}
-        style={{
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-        }}
-      >
+      <Pressable onPress={() => router.back()} className="px-4 py-3 flex-row items-center gap-2">
         <Ionicons name="arrow-back" size={20} color="#F0EDE8" />
         <Text className="text-cream font-sans">Courts</Text>
       </Pressable>
@@ -125,19 +103,14 @@ export default function CourtDetailScreen() {
           <Text className="font-display text-4xl text-cream mb-1">{court.name}</Text>
 
           {/* Address + directions */}
-          <Pressable
-            onPress={openDirections}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 16 }}
-          >
+          <Pressable onPress={openDirections} className="flex-row items-center gap-1 mb-4">
             <Ionicons name="location-outline" size={14} color="#7A7870" />
             <Text className="text-muted font-sans text-sm">{court.address}</Text>
-            <Text className="text-orange font-sans text-sm" style={{ marginLeft: 4 }}>
-              Get directions
-            </Text>
+            <Text className="text-orange font-sans text-sm ml-1">Get directions</Text>
           </Pressable>
 
           {/* Tags */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+          <View className="flex-row flex-wrap gap-2 mb-6">
             <Badge
               label={court.court_type}
               color={court.court_type === 'indoor' ? '#3B82F6' : '#FF5C00'}
@@ -157,18 +130,9 @@ export default function CourtDetailScreen() {
               <Pressable
                 key={g.id}
                 onPress={() => router.push(`/games/${g.id}`)}
-                style={{
-                  backgroundColor: '#181818',
-                  borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.08)',
-                  borderRadius: 12,
-                  padding: 16,
-                  marginBottom: 12,
-                }}
+                className="bg-surface border border-border rounded-xl p-4 mb-3"
               >
-                <Text className="text-cream font-sans" style={{ fontWeight: '600' }}>
-                  {g.title}
-                </Text>
+                <Text className="text-cream font-sans font-semibold">{g.title}</Text>
                 <Text className="text-muted font-sans text-sm">{formatDate(g.starts_at)}</Text>
                 <Text className="text-muted font-sans text-xs">
                   {g.game_players.length}/{g.max_players} players · {g.skill_level} · {g.game_type}
@@ -180,20 +144,12 @@ export default function CourtDetailScreen() {
           {/* CTA */}
           <Pressable
             onPress={() => router.push({ pathname: '/games/create', params: { court_id: id } })}
-            style={{
-              backgroundColor: '#FF5C00',
-              borderRadius: 12,
-              paddingVertical: 16,
-              alignItems: 'center',
-              marginTop: 24,
-            }}
+            className="bg-orange rounded-xl py-4 items-center mt-6"
           >
-            <Text className="text-cream font-sans" style={{ fontWeight: '600', fontSize: 16 }}>
-              Add a game here
-            </Text>
+            <Text className="text-cream font-sans font-semibold text-base">Add a game here</Text>
           </Pressable>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

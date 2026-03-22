@@ -4,17 +4,10 @@ import { useShimmer } from '@/hooks/use-shimmer';
 export default function MapSkeleton() {
   const opacity = useShimmer();
   return (
-    <View
-      style={{
-        ...StyleSheet.absoluteFill,
-        backgroundColor: '#0A0A0A',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <Animated.View style={{ alignItems: 'center', gap: 10, opacity }}>
-        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#2a2a2a' }} />
-        <View style={{ width: 72, height: 10, borderRadius: 5, backgroundColor: '#2a2a2a' }} />
+    <View className="bg-dark justify-center items-center" style={StyleSheet.absoluteFill}>
+      <Animated.View className="items-center gap-2.5" style={{ opacity }}>
+        <View className="w-9 h-9 rounded-full bg-skeleton" />
+        <View className="w-[72px] h-2.5 rounded-md bg-skeleton" />
       </Animated.View>
     </View>
   );

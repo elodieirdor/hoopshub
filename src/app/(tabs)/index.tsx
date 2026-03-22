@@ -229,47 +229,25 @@ export default function CourtsScreen() {
 
       {/* Drag handle */}
       <View {...panResponder.panHandlers} className="bg-dark items-center py-2">
-        <View
-          style={{
-            width: 36,
-            height: 4,
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            borderRadius: 2,
-          }}
-        />
+        <View className="w-9 h-1 bg-white/20 rounded-sm" />
       </View>
 
       {/* Bottom panel */}
       <View className="flex-1">
         {/* Search bar — fixed, never scrolls away */}
-        <View
-          style={{
-            paddingTop: snapIndex === 0 ? insets.top + 8 : 8,
-            paddingHorizontal: 16,
-            paddingBottom: 8,
-          }}
-        >
+        <View className="px-4 pb-2" style={{ paddingTop: snapIndex === 0 ? insets.top + 8 : 8 }}>
           <View
+            className="flex-row items-center h-11 rounded-[20px]"
             style={{
               backgroundColor: 'rgba(20,20,20,0.92)',
-              borderRadius: 20,
-              height: 44,
               borderWidth: 1,
               borderColor: 'rgba(255,255,255,0.12)',
-              flexDirection: 'row',
-              alignItems: 'center',
               paddingHorizontal: 14,
             }}
           >
             <Ionicons name="search-outline" size={16} color="#7A7870" />
             <RNTextInput
-              style={{
-                flex: 1,
-                marginLeft: 8,
-                color: '#F0EDE8',
-                fontFamily: 'DMSans_400Regular',
-                fontSize: 14,
-              }}
+              className="flex-1 ml-2 text-cream font-sans text-sm"
               placeholder="Search courts..."
               placeholderTextColor="#7A7870"
               value={search}
@@ -281,7 +259,7 @@ export default function CourtsScreen() {
         {/* Court list — header contains nearby row + filter chips */}
         <FlatList
           ref={listRef}
-          style={{ flex: 1 }}
+          className="flex-1"
           data={filtered}
           keyExtractor={(c) => String(c.id)}
           renderItem={({ item }) => (
@@ -362,7 +340,7 @@ export default function CourtsScreen() {
           }
           ListEmptyComponent={
             loading ? (
-              <View style={{ gap: 12 }}>
+              <View className="gap-3">
                 {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
                   <CourtCardSkeleton key={i} />
                 ))}

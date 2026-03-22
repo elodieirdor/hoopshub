@@ -38,13 +38,15 @@ export function CourtCard({ court, onPress, distance, highlighted }: CourtCardPr
   return (
     <PressableScale
       onPress={onPress}
+      // @ts-ignore
       className="bg-surface rounded-xl p-4"
       style={{
         borderWidth: 0.5,
         borderColor: highlighted ? '#FF5C00' : 'rgba(255,255,255,0.08)',
+        borderRadius: 12,
       }}
     >
-      <View className="flex-row items-center gap-3">
+      <View className="flex-row items-center gap-3 bg-surface rounded-xl p-4">
         <CourtIcon court={court} />
 
         <View className="flex-1">

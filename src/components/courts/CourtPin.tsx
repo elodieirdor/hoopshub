@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
 import { Marker, Callout } from 'react-native-maps';
 import { Court } from '@/types';
 
@@ -25,29 +25,20 @@ export function CourtPin({ court, onPress, onCalloutPress }: CourtPinProps) {
           if (timer.current) clearTimeout(timer.current);
           timer.current = setTimeout(() => setTracksViewChanges(false), 300);
         }}
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 16,
-          backgroundColor: '#FF5C00',
-          borderWidth: 2,
-          borderColor: '#fff',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        className="w-8 h-8 rounded-full bg-orange border-2 border-white items-center justify-center"
       >
         {/* Emoji uses the system font — no custom font loading needed */}
         <Text style={{ fontSize: 12, lineHeight: 14 }}>🏀</Text>
       </View>
 
-      <Callout tooltip={false}>
-        <Pressable style={{ padding: 4, minWidth: 140 }} onPress={onCalloutPress}>
+      <Callout tooltip={false} onPress={onCalloutPress}>
+        <View className="p-1 min-w-[140px]">
           <Text className="font-display text-base" style={{ color: '#111' }}>
             {court.name}
           </Text>
           <Text className="font-sans text-xs text-muted">{court.address}</Text>
           <Text className="font-sans text-xs text-orange mt-1">View court →</Text>
-        </Pressable>
+        </View>
       </Callout>
     </Marker>
   );

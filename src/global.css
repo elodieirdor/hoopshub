@@ -20,6 +20,9 @@
     /* ── Borders ── */
     --color-border: rgba(255, 255, 255, 0.07);
 
+    /* ── Skeleton ── */
+    --color-skeleton: #2a2a2a;
+
     /* ── Semantic ── */
     --color-success: #4ade80;
     --color-warning: #fbbf24;
