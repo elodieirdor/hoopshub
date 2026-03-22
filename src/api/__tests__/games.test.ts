@@ -18,7 +18,7 @@ const mockCourt: Court = {
   full_court: true,
   lit: true,
   is_free: false,
-  added_by: null,
+  images: [],
 };
 
 const mockHost: Profile = {

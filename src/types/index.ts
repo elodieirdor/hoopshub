@@ -30,7 +30,7 @@ export interface Court {
   full_court: boolean | null;
   lit: boolean;
   is_free: boolean;
-  added_by: number | null;
+  images: string[] | undefined;
 }
 
 export interface Game {

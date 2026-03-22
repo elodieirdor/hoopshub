@@ -55,10 +55,18 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
+        <Stack
+          screenOptions={{
+            title: 'Loading...',
+          }}
+        >
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="courts/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="courts/[id]" options={{ headerBackTitle: 'Courts' }} />
+          <Stack.Screen
+            name="courts/edit"
+            options={{ title: 'Edit court', headerBackTitle: 'Back' }}
+          />
           <Stack.Screen name="games/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="games/create" options={{ headerShown: false }} />
           <Stack.Screen name="profile/edit" options={{ headerShown: false }} />

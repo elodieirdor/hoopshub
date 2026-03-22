@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, Linking, View, Text, Pressable } from 'react-native';
+import { ScrollView, Linking, View, Text, Pressable, Image } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getCourt } from '@/api/courts';
 import { getGames } from '@/api/games';
@@ -17,6 +17,14 @@ function Badge({ label, color }: { label: string; color: string }) {
     </View>
   );
 }
+
+const SKILL_COLORS: Record<string, string> = {
+  beginner: '#3B82F6',
+  intermediate: '#FF5C00',
+  advanced: '#F59E0B',
+  comp: '#EF4444',
+  any: '#22C55E',
+};
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-NZ', {
@@ -73,32 +81,38 @@ export default function CourtDetailScreen() {
 
   return (
     <View className="flex-1 bg-dark">
-      {/* Back header */}
-      <Pressable onPress={() => router.back()} className="px-4 py-3 flex-row items-center gap-2">
-        <Ionicons name="arrow-back" size={20} color="#F0EDE8" />
-        <Text className="text-cream font-sans">Courts</Text>
-      </Pressable>
+      <Stack.Screen
+        options={{
+          title: court.name,
+          headerRight: () => (
+            <Pressable onPress={() => router.push({ pathname: '/courts/edit', params: { id } })}>
+              <Ionicons name="create-outline" size={22} color="#FF5C00" />
+            </Pressable>
+          ),
+        }}
+      />
+
+      {/* Hero image / placeholder */}
+      {court.images && court.images.length > 0 ? (
+        <Image
+          source={{ uri: court.images[0] }}
+          style={{ width: '100%', height: 220 }}
+          resizeMode="cover"
+        />
+      ) : (
+        <View
+          style={{
+            height: 220,
+            backgroundColor: '#181818',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ionicons name="basketball-outline" size={56} color="#FF5C00" style={{ opacity: 0.25 }} />
+        </View>
+      )}
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 32 }}>
-        {/* Static mini map */}
-        <MapView
-          style={{ height: 180 }}
-          customMapStyle={DARK_MAP_STYLE}
-          region={{
-            latitude: court.lat,
-            longitude: court.lng,
-            latitudeDelta: 0.008,
-            longitudeDelta: 0.008,
-          }}
-          scrollEnabled={false}
-          zoomEnabled={false}
-          pitchEnabled={false}
-          rotateEnabled={false}
-          pointerEvents="none"
-        >
-          <Marker coordinate={{ latitude: court.lat, longitude: court.lng }} />
-        </MapView>
-
         <View className="px-4 pt-4">
           <Text className="font-display text-4xl text-cream mb-1">{court.name}</Text>
 
@@ -116,10 +130,30 @@ export default function CourtDetailScreen() {
               color={court.court_type === 'indoor' ? '#3B82F6' : '#FF5C00'}
             />
             {court.surface && <Badge label={court.surface} color="#7A7870" />}
-            {court.full_court && <Badge label="Full court" color="#FF5C00" />}
+            {court.full_court === true && <Badge label="Full court" color="#FF5C00" />}
+            {court.full_court === false && <Badge label="Half court" color="#7A7870" />}
             {court.lit && <Badge label="Lit" color="#F59E0B" />}
             {court.is_free && <Badge label="Free" color="#22C55E" />}
           </View>
+
+          {/* Mini map */}
+          <MapView
+            style={{ height: 140, borderRadius: 12, marginBottom: 24 }}
+            customMapStyle={DARK_MAP_STYLE}
+            region={{
+              latitude: court.lat,
+              longitude: court.lng,
+              latitudeDelta: 0.008,
+              longitudeDelta: 0.008,
+            }}
+            scrollEnabled={false}
+            zoomEnabled={false}
+            pitchEnabled={false}
+            rotateEnabled={false}
+            pointerEvents="none"
+          >
+            <Marker coordinate={{ latitude: court.lat, longitude: court.lng }} />
+          </MapView>
 
           {/* Games section */}
           <Text className="font-display text-2xl text-cream mb-3">Games here</Text>
@@ -132,11 +166,15 @@ export default function CourtDetailScreen() {
                 onPress={() => router.push(`/games/${g.id}`)}
                 className="bg-surface border border-border rounded-xl p-4 mb-3"
               >
-                <Text className="text-cream font-sans font-semibold">{g.title}</Text>
-                <Text className="text-muted font-sans text-sm">{formatDate(g.starts_at)}</Text>
-                <Text className="text-muted font-sans text-xs">
-                  {g.game_players.length}/{g.max_players} players · {g.skill_level} · {g.game_type}
-                </Text>
+                <Text className="text-cream font-sans font-semibold mb-0.5">{g.title}</Text>
+                <Text className="text-muted font-sans text-sm mb-2">{formatDate(g.starts_at)}</Text>
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-muted font-sans text-xs">
+                    {g.game_players?.length ?? 0}/{g.max_players} players
+                  </Text>
+                  <Badge label={g.skill_level} color={SKILL_COLORS[g.skill_level] ?? '#7A7870'} />
+                  <Badge label={g.game_type} color="#7A7870" />
+                </View>
               </Pressable>
             ))
           )}
