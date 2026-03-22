@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { TextInput as RNTextInput } from 'react-native';
+import { View, Text, TextInput, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, TextInput, Pressable } from '@/tw';
 
-type Props = Omit<React.ComponentProps<typeof RNTextInput>, 'style'> & {
+type Props = Omit<React.ComponentProps<typeof TextInput>, 'style'> & {
   label?: string;
   error?: string;
 };

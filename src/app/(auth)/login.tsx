@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform } from 'react-native';
+import { KeyboardAvoidingView, Platform, View, Text, Pressable, ScrollView } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { router } from 'expo-router';
-import { View, Text, Pressable, ScrollView } from '@/tw';
 import { FormInput } from '@/components/ui/form-input';
 import { useAuthStore } from '@/store/authStore';
 

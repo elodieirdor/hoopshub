@@ -5,6 +5,7 @@ export const getGames = async (params?: {
   city?: string;
   skill_level?: string;
   status?: string;
+  court_id?: number;
 }) => {
   const res = await client.get<Game[]>('/games', { params });
   return res.data;
