@@ -1,15 +1,7 @@
 export interface User {
   id: number;
   name: string;
-  email: string;
-  profile: Profile;
-}
-
-export interface Profile {
-  id: number;
-  user_id: number;
   username: string;
-  full_name: string;
   city: string | null;
   position: 'Guard' | 'Forward' | 'Centre' | 'Any' | null;
   skill_level: 'beginner' | 'intermediate' | 'advanced' | 'comp';
@@ -17,6 +9,10 @@ export interface Profile {
   games_played: number;
   avg_rating: number;
 }
+
+export type CurrentUser = User & {
+  email: string;
+};
 
 export interface Court {
   id: number;
@@ -46,10 +42,10 @@ export interface Game {
   game_type: '3v3' | '5v5' | 'casual';
   status: 'open' | 'full' | 'cancelled' | 'completed';
   created_at: string;
-  host: Profile;
+  host: User;
   court: Court;
   game_players: GamePlayer[];
-  players?: Profile[];
+  players?: User[];
 }
 
 export interface GamePlayer {
@@ -58,7 +54,7 @@ export interface GamePlayer {
   player_id: number;
   status: 'confirmed' | 'waitlist' | 'cancelled';
   joined_at: string;
-  player?: Profile;
+  player: User;
 }
 
 export interface Rating {

@@ -1,5 +1,5 @@
 import client from './client';
-import { User } from '@/types';
+import { CurrentUser } from '@/types';
 
 export const register = async (data: {
   full_name: string;
@@ -8,12 +8,12 @@ export const register = async (data: {
   city?: string;
   skill_level?: string;
 }) => {
-  const res = await client.post<{ token: string; user: User }>('/register', data);
+  const res = await client.post<{ token: string; user: CurrentUser }>('/register', data);
   return res.data;
 };
 
 export const login = async (data: { email: string; password: string }) => {
-  const res = await client.post<{ token: string; user: User }>('/login', data);
+  const res = await client.post<{ token: string; user: CurrentUser }>('/login', data);
   return res.data;
 };
 
@@ -22,6 +22,6 @@ export const logout = async () => {
 };
 
 export const me = async () => {
-  const res = await client.get<User>('/me');
+  const res = await client.get<CurrentUser>('/me');
   return res.data;
 };

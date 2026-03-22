@@ -9,13 +9,13 @@ import {
   View,
   Text,
   Pressable,
-  ScrollView,
 } from 'react-native';
 import MapView from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { FilterChips } from '@/components/ui/FilterChips';
 import { CourtPin } from '@/components/courts/CourtPin';
 import { CourtCard } from '@/components/courts/CourtCard';
 import { getCourts } from '@/api/courts';
@@ -115,7 +115,7 @@ export default function CourtsScreen() {
   // ── Data ──────────────────────────────────────────────────────────────────
   const fetchCourts = async () => {
     try {
-      const city = user?.profile?.city ?? 'Christchurch';
+      const city = user?.city ?? 'Christchurch';
       const data = await getCourts({ city });
       setCourts(data);
     } catch {
@@ -290,39 +290,12 @@ export default function CourtsScreen() {
               </View>
 
               {/* Filter chips */}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 8, flexDirection: 'row' }}
-              >
-                {FILTERS.map((f) => {
-                  const active = activeFilter === f.key;
-                  return (
-                    <Pressable
-                      key={f.key}
-                      onPress={() => setActiveFilter(f.key)}
-                      className={
-                        active
-                          ? 'bg-orange rounded-full px-3 py-1.5'
-                          : 'bg-surface rounded-full px-3 py-1.5'
-                      }
-                      style={
-                        active
-                          ? undefined
-                          : { borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)' }
-                      }
-                    >
-                      <Text
-                        className={
-                          active ? 'text-xs font-sans text-cream' : 'text-xs font-sans text-muted'
-                        }
-                      >
-                        {f.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
+              <FilterChips
+                chips={FILTERS}
+                isActive={(key) => activeFilter === key}
+                onPress={setActiveFilter}
+                size="sm"
+              />
             </View>
           }
           contentContainerStyle={{

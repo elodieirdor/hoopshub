@@ -8,7 +8,18 @@ const authApi = jest.mocked(require('../api/auth'));
 const { storage } = require('../utils/storage') as { storage: Record<string, jest.Mock> };
 const { router } = require('expo-router');
 
-const mockUser = { id: 1, email: 'test@example.com', full_name: 'Test User' };
+const mockUser = {
+  id: 1,
+  email: 'test@example.com',
+  name: 'Test User',
+  username: 'testuser',
+  city: 'Christchurch',
+  position: 'Guard' as const,
+  skill_level: 'intermediate' as const,
+  avatar_url: null,
+  games_played: 0,
+  avg_rating: 0,
+};
 
 beforeEach(() => {
   jest.clearAllMocks();

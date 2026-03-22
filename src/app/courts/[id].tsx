@@ -4,9 +4,11 @@ import MapView, { Marker } from 'react-native-maps';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getCourt } from '@/api/courts';
-import { getGames } from '@/api/games';
+import { getGames, joinGame, leaveGame } from '@/api/games';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { Court, Game } from '@/types';
+import { useAuthStore } from '@/store/authStore';
+import { GameCard } from '@/components/games/GameCard';
 
 function Badge({ label, color }: { label: string; color: string }) {
   return (
@@ -18,30 +20,16 @@ function Badge({ label, color }: { label: string; color: string }) {
   );
 }
 
-const SKILL_COLORS: Record<string, string> = {
-  beginner: '#3B82F6',
-  intermediate: '#FF5C00',
-  advanced: '#F59E0B',
-  comp: '#EF4444',
-  any: '#22C55E',
-};
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-NZ', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
 export default function CourtDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const currentUser = useAuthStore((s) => s.user);
   const router = useRouter();
 
   const [court, setCourt] = useState<Court | null>(null);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [joiningId, setJoiningId] = useState<number | null>(null);
+  const [leavingId, setLeavingId] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -65,6 +53,69 @@ export default function CourtDetailScreen() {
       }
     })();
   }, [id]);
+
+  const handleJoin = async (gameId: number) => {
+    setJoiningId(gameId);
+    setGames((prev) =>
+      prev.map((g) => {
+        if (g.id !== gameId) return g;
+        const newFilled = (g.game_players?.length ?? 0) + 1;
+        return {
+          ...g,
+          game_players: [
+            ...(g.game_players ?? []),
+            {
+              id: -1,
+              game_id: gameId,
+              player_id: currentUser?.id ?? -1,
+              status: 'confirmed' as const,
+              joined_at: new Date().toISOString(),
+              player: currentUser!,
+            },
+          ],
+          status: newFilled >= g.max_players ? ('full' as const) : g.status,
+        };
+      }),
+    );
+    try {
+      await joinGame(gameId);
+    } catch {
+      setGames((prev) =>
+        prev.map((g) => {
+          if (g.id !== gameId) return g;
+          return {
+            ...g,
+            game_players: (g.game_players ?? []).filter((p) => p.id !== -1),
+            status: 'open' as const,
+          };
+        }),
+      );
+    } finally {
+      setJoiningId(null);
+    }
+  };
+
+  const handleLeave = async (gameId: number) => {
+    setLeavingId(gameId);
+    const snapshot = games.find((g) => g.id === gameId);
+    setGames((prev) =>
+      prev.map((g) => {
+        if (g.id !== gameId) return g;
+        return {
+          ...g,
+          game_players: (g.game_players ?? []).filter((p) => p.player.id !== currentUser?.id),
+          status: 'open' as const,
+        };
+      }),
+    );
+    try {
+      await leaveGame(gameId);
+    } catch {
+      if (snapshot) setGames((prev) => prev.map((g) => (g.id === gameId ? snapshot : g)));
+    } finally {
+      setLeavingId(null);
+    }
+  };
 
   const openDirections = () => {
     if (!court) return;
@@ -161,21 +212,14 @@ export default function CourtDetailScreen() {
             <Text className="text-muted font-sans text-sm">No upcoming games.</Text>
           ) : (
             games.map((g) => (
-              <Pressable
+              <GameCard
                 key={g.id}
-                onPress={() => router.push(`/games/${g.id}`)}
-                className="bg-surface border border-border rounded-xl p-4 mb-3"
-              >
-                <Text className="text-cream font-sans font-semibold mb-0.5">{g.title}</Text>
-                <Text className="text-muted font-sans text-sm mb-2">{formatDate(g.starts_at)}</Text>
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-muted font-sans text-xs">
-                    {g.game_players?.length ?? 0}/{g.max_players} players
-                  </Text>
-                  <Badge label={g.skill_level} color={SKILL_COLORS[g.skill_level] ?? '#7A7870'} />
-                  <Badge label={g.game_type} color="#7A7870" />
-                </View>
-              </Pressable>
+                game={g}
+                onJoin={handleJoin}
+                onLeave={handleLeave}
+                joining={joiningId === g.id}
+                leaving={leavingId === g.id}
+              />
             ))
           )}
 
