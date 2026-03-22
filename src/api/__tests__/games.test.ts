@@ -1,6 +1,6 @@
 import { getGames, joinGame, leaveGame, deleteGame } from '../games';
 import client from '../client';
-import { Game, Court, Profile } from '@/types';
+import { Game, Court, User } from '@/types';
 
 jest.mock('../client');
 
@@ -21,11 +21,10 @@ const mockCourt: Court = {
   images: [],
 };
 
-const mockHost: Profile = {
+const mockHost: User = {
   id: 99,
-  user_id: 99,
   username: 'ballerNZ',
-  full_name: 'Alex Baller',
+  name: 'Alex Baller',
   city: 'Christchurch',
   position: 'Guard',
   skill_level: 'intermediate',
