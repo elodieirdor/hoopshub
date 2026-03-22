@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Rect, Circle, Line, Path, Arc } from 'react-native-svg';
+import Svg, { Rect, Circle, Line, Path } from 'react-native-svg';
 
 const STROKE = '#FF5C00';
 const OPACITY = 0.18;

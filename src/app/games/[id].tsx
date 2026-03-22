@@ -1,19 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, Image } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getGame, joinGame, leaveGame, updateGame } from '@/api/games';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
-import { Badge } from '@/components/ui/Badge';
 import { BasketballCourtSVG } from '@/components/games/BasketballCourtSVG';
+
+const HERO_HEIGHT = 220;
 import { initials, formatDate, formatDuration } from '@/utils/formatters';
 
 const SKILL_COLORS: Record<Game['skill_level'], string> = {
@@ -65,11 +59,14 @@ export default function GameDetailScreen() {
     );
   }
 
-  const confirmedPlayers = (game.game_players ?? []).filter((p) => p.status === 'confirmed');
+  const confirmedPlayers = game.game_players ?? [];
+  console.log('confirmedPlayers', confirmedPlayers);
   const filled = confirmedPlayers.length;
   const emptySlots = Math.max(0, game.max_players - filled);
   const isHost = currentUser?.id === game.host_id;
-  const hasJoined = !isHost && confirmedPlayers.some((p) => p.player.id === currentUser?.id);
+  const hasJoined = !isHost && confirmedPlayers.some((p) => p.player_id === currentUser?.id);
+  console.log(hasJoined);
+  console.log(currentUser);
   const isActive = game.status === 'open' || game.status === 'full';
   const isFull = filled >= game.max_players || game.status === 'full';
 
@@ -133,19 +130,69 @@ export default function GameDetailScreen() {
       <Stack.Screen options={{ title: game.title, headerBackTitle: 'Back' }} />
 
       {/* Hero */}
-      <BasketballCourtSVG height={180} />
+      <View style={{ height: HERO_HEIGHT }}>
+        {game.court?.images && game.court.images.length > 0 ? (
+          <Image
+            source={{ uri: game.court.images[0] }}
+            style={{ width: '100%', height: HERO_HEIGHT }}
+            resizeMode="cover"
+          />
+        ) : (
+          <BasketballCourtSVG height={HERO_HEIGHT} />
+        )}
+        {/* Overlay: game type + skill level */}
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 12,
+            left: 16,
+            flexDirection: 'row',
+            gap: 6,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: 'rgba(0,0,0,0.6)',
+              borderRadius: 6,
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+            }}
+          >
+            <Text style={{ color: '#F0EDE8', fontFamily: 'DMSans', fontSize: 12 }}>
+              {game.game_type.toUpperCase()}
+            </Text>
+          </View>
+          <View
+            style={{
+              backgroundColor: skillColor + 'CC',
+              borderRadius: 6,
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+            }}
+          >
+            <Text style={{ color: '#F0EDE8', fontFamily: 'DMSans', fontSize: 12 }}>
+              {game.skill_level.toUpperCase()}
+            </Text>
+          </View>
+          {(game.status === 'cancelled' || game.status === 'completed') && (
+            <View
+              style={{
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                borderRadius: 6,
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+              }}
+            >
+              <Text style={{ color: '#7A7870', fontFamily: 'DMSans', fontSize: 12 }}>
+                {game.status.toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="px-4 pt-4">
-          {/* Badge row */}
-          <View className="flex-row gap-2 mb-3">
-            <Badge label={game.skill_level.toUpperCase()} color={skillColor} />
-            <Badge label={game.game_type.toUpperCase()} color="#7A7870" />
-            {(game.status === 'cancelled' || game.status === 'completed') && (
-              <Badge label={game.status.toUpperCase()} color="#7A7870" />
-            )}
-          </View>
-
           {/* Title */}
           <Text className="font-display text-4xl text-cream mb-3" numberOfLines={2}>
             {game.title}
@@ -167,7 +214,8 @@ export default function GameDetailScreen() {
                 {game.host?.name ?? 'Unknown'}
                 {game.host?.avg_rating ? (
                   <Text className="text-muted font-sans text-xs">
-                    {' '}· ★ {Number(game.host.avg_rating).toFixed(1)}
+                    {' '}
+                    · ★ {Number(game.host.avg_rating).toFixed(1)}
                   </Text>
                 ) : null}
               </Text>
@@ -224,37 +272,55 @@ export default function GameDetailScreen() {
           </View>
 
           {/* Players section */}
-          <Text className="font-display text-2xl text-cream mb-3">Players</Text>
-          <View className="flex-row flex-wrap gap-2 mb-5">
-            {confirmedPlayers.map((gp) => (
-              <View key={gp.id} className="items-center gap-1">
-                <View
-                  className="rounded-full items-center justify-center"
-                  style={{ width: 44, height: 44, backgroundColor: '#FF5C00' }}
-                >
-                  <Text className="text-cream font-sans font-semibold text-xs">
-                    {initials(gp.player?.name ?? '?')}
+          <Text className="font-display text-2xl text-cream mb-3">
+            Players ({filled}/{game.max_players})
+          </Text>
+          <View
+            className="rounded-xl mb-5"
+            style={{
+              backgroundColor: '#181818',
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.08)',
+            }}
+          >
+            {confirmedPlayers.map((gp, i) => (
+              <View key={gp.id}>
+                {i > 0 && <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />}
+                <View className="flex-row items-center gap-3 px-4 py-3">
+                  <View
+                    className="rounded-full items-center justify-center"
+                    style={{ width: 36, height: 36, backgroundColor: '#FF5C00' }}
+                  >
+                    <Text className="text-cream font-sans font-semibold text-xs">
+                      {initials(gp.player?.name ?? '?')}
+                    </Text>
+                  </View>
+                  <Text className="text-cream font-sans text-sm font-semibold flex-1">
+                    {gp.player?.name ?? 'Unknown'}
                   </Text>
+                  {gp.player_id === game.host_id && (
+                    <Text className="text-orange font-sans text-xs">Host</Text>
+                  )}
                 </View>
-                <Text className="text-muted font-sans text-xs" numberOfLines={1} style={{ maxWidth: 44 }}>
-                  {gp.player?.name?.split(' ')[0] ?? ''}
-                </Text>
               </View>
             ))}
             {Array.from({ length: emptySlots }).map((_, i) => (
-              <View key={`empty-${i}`} className="items-center gap-1">
-                <View
-                  className="rounded-full border items-center justify-center"
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderColor: 'rgba(255,255,255,0.12)',
-                    borderStyle: 'dashed',
-                  }}
-                >
-                  <Ionicons name="add" size={18} color="rgba(255,255,255,0.2)" />
+              <View key={`empty-${i}`}>
+                {(i > 0 || confirmedPlayers.length > 0) && (
+                  <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+                )}
+                <View className="flex-row items-center gap-3 px-4 py-3">
+                  <View
+                    className="rounded-full items-center justify-center"
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.12)',
+                    }}
+                  />
+                  <Text className="text-muted font-sans text-sm">Open spot</Text>
                 </View>
-                <Text className="text-muted font-sans text-xs">Open</Text>
               </View>
             ))}
           </View>

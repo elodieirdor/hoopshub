@@ -59,7 +59,6 @@ export default function CourtDetailScreen() {
               id: -1,
               game_id: gameId,
               player_id: currentUser?.id ?? -1,
-              status: 'confirmed' as const,
               joined_at: new Date().toISOString(),
               player: currentUser!,
             },

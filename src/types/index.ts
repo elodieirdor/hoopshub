@@ -52,7 +52,6 @@ export interface GamePlayer {
   id: number;
   game_id: number;
   player_id: number;
-  status: 'confirmed' | 'waitlist' | 'cancelled';
   joined_at: string;
   player: User;
 }
