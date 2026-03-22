@@ -9,16 +9,7 @@ import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { Court, Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { GameCard } from '@/components/games/GameCard';
-
-function Badge({ label, color }: { label: string; color: string }) {
-  return (
-    <View className="rounded-md px-2 py-[3px]" style={{ backgroundColor: color + '22' }}>
-      <Text className="text-xs font-sans" style={{ color }}>
-        {label}
-      </Text>
-    </View>
-  );
-}
+import { Badge } from '@/components/ui/Badge';
 
 export default function CourtDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
