@@ -20,3 +20,8 @@ export const createCourt = async (data: Partial<Court>) => {
   const res = await client.post<Court>('/courts', data);
   return res.data;
 };
+
+export const updateCourt = async (id: number, data: Partial<Court>) => {
+  const res = await client.put<Court>(`/courts/${id}`, data);
+  return res.data;
+};
