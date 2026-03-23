@@ -19,7 +19,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { FormInput } from '@/components/ui/form-input';
 import { getCourts } from '@/api/courts';
-import { createGame } from '@/api/games';
+import { getGame, updateGame } from '@/api/games';
 import { Court } from '@/types';
 
 const schema = z.object({
@@ -63,12 +63,13 @@ const GAME_TYPES: { value: FormData['game_type']; label: string }[] = [
   { value: 'casual', label: 'Casual' },
 ];
 
-export default function CreateGameScreen() {
+export default function EditGameScreen() {
   const router = useRouter();
-  const { court_id: courtIdParam } = useLocalSearchParams<{ court_id?: string }>();
+  const { id } = useLocalSearchParams<{ id: string }>();
 
   const [courts, setCourts] = useState<Court[]>([]);
   const [courtsLoading, setCourtsLoading] = useState(true);
+  const [gameLoading, setGameLoading] = useState(true);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [courtModalVisible, setCourtModalVisible] = useState(false);
 
@@ -81,21 +82,10 @@ export default function CreateGameScreen() {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      duration_mins: 90,
-      max_players: 10,
-      skill_level: 'any',
-      game_type: 'casual',
-      starts_at: (() => {
-        const d = new Date();
-        d.setMinutes(0, 0, 0);
-        d.setHours(d.getHours() + 1);
-        return d;
-      })(),
-    },
   });
 
   const startsAt = watch('starts_at');
@@ -103,41 +93,60 @@ export default function CreateGameScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await getCourts({ city: 'Christchurch' });
-        setCourts(data);
-        if (courtIdParam) {
-          const prefilled = data.find((c) => c.id === Number(courtIdParam));
-          if (prefilled) {
-            setSelectedCourt(prefilled);
-            setValue('court_id', prefilled.id);
-          }
-        }
+        const [game, courtList] = await Promise.all([
+          getGame(Number(id)),
+          getCourts({ city: 'Christchurch' }),
+        ]);
+        setCourts(courtList);
+
+        const court = courtList.find((c) => c.id === game.court_id) ?? game.court ?? null;
+        setSelectedCourt(court);
+
+        reset({
+          court_id: game.court_id,
+          title: game.title,
+          description: game.description ?? undefined,
+          starts_at: new Date(game.starts_at),
+          duration_mins: game.duration_mins,
+          max_players: game.max_players,
+          skill_level: game.skill_level,
+          game_type: game.game_type,
+        });
       } catch {
-        // silently fail
+        setError('Failed to load game.');
       } finally {
+        setGameLoading(false);
         setCourtsLoading(false);
       }
     })();
-  }, [courtIdParam, setValue]);
+  }, [id, reset]);
 
   const onSubmit = async (data: FormData) => {
     setError(null);
     try {
-      await createGame({
+      await updateGame(Number(id), {
         court_id: data.court_id,
         title: data.title,
-        description: data.description,
+        description: data.description ?? null,
         starts_at: data.starts_at.toISOString(),
         duration_mins: data.duration_mins,
         max_players: data.max_players,
         skill_level: data.skill_level,
         game_type: data.game_type,
       });
-      router.replace('/(tabs)/games');
+      router.back();
     } catch {
-      setError('Failed to post game. Please try again.');
+      setError('Failed to save changes. Please try again.');
     }
   };
+
+  if (gameLoading) {
+    return (
+      <View className="flex-1 bg-dark justify-center items-center">
+        <ActivityIndicator color="#FF5C00" />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -151,7 +160,7 @@ export default function CreateGameScreen() {
       >
         {/* Header */}
         <View className="flex-row items-center justify-between mb-8">
-          <Text className="font-display text-4xl text-cream">POST A GAME</Text>
+          <Text className="font-display text-4xl text-cream">EDIT GAME</Text>
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Ionicons name="close" size={24} color="#F0EDE8" />
           </Pressable>
@@ -467,7 +476,7 @@ export default function CreateGameScreen() {
           disabled={isSubmitting}
         >
           <Text className="text-cream font-sans text-base font-semibold">
-            {isSubmitting ? 'Posting…' : 'Post game'}
+            {isSubmitting ? 'Saving…' : 'Save changes'}
           </Text>
         </Pressable>
       </ScrollView>
