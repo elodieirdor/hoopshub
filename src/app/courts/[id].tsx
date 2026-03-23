@@ -1,118 +1,108 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { ScrollView, Linking, View, Text, Pressable, Image } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCourt } from '@/api/courts';
 import { getGames, joinGame, leaveGame } from '@/api/games';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
-import { Court, Game } from '@/types';
+import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { GameCard } from '@/components/games/GameCard';
 import { Badge } from '@/components/ui/Badge';
 
 export default function CourtDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const courtId = Number(id);
   const currentUser = useAuthStore((s) => s.user);
+  const queryClient = useQueryClient();
   const router = useRouter();
 
-  const [court, setCourt] = useState<Court | null>(null);
-  const [games, setGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [joiningId, setJoiningId] = useState<number | null>(null);
-  const [leavingId, setLeavingId] = useState<number | null>(null);
+  const { data: court, isLoading } = useQuery({
+    queryKey: ['court', id],
+    queryFn: () => getCourt(courtId),
+    enabled: !!id,
+  });
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [courtData, allGames] = await Promise.all([
-          getCourt(Number(id)),
-          getGames({ court_id: Number(id) }),
-        ]);
-        setCourt(courtData);
-        setGames(
-          allGames
-            .filter((g) => g.court_id === Number(id))
-            .filter(
-              (g) => ['open', 'full'].includes(g.status) && new Date(g.starts_at) > new Date(),
-            ),
-        );
-      } catch {
-        // silently fail
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [id]);
+  const GAMES_KEY = ['games', { court_id: courtId }];
 
-  const handleJoin = async (gameId: number) => {
-    setJoiningId(gameId);
-    setGames((prev) =>
-      prev.map((g) => {
-        if (g.id !== gameId) return g;
-        const newFilled = (g.game_players?.length ?? 0) + 1;
-        return {
-          ...g,
-          game_players: [
-            ...(g.game_players ?? []),
-            {
-              id: -1,
-              game_id: gameId,
-              player_id: currentUser?.id ?? -1,
-              joined_at: new Date().toISOString(),
-              player: currentUser!,
-            },
-          ],
-          status: newFilled >= g.max_players ? ('full' as const) : g.status,
-        };
-      }),
-    );
-    try {
-      await joinGame(gameId);
-    } catch {
-      setGames((prev) =>
-        prev.map((g) => {
+  const { data: allGames = [] } = useQuery({
+    queryKey: GAMES_KEY,
+    queryFn: () => getGames({ court_id: courtId }),
+    enabled: !!id,
+  });
+
+  const games = useMemo(
+    () =>
+      allGames.filter(
+        (g) => ['open', 'full'].includes(g.status) && new Date(g.starts_at) > new Date(),
+      ),
+    [allGames],
+  );
+
+  const joinMutation = useMutation({
+    mutationFn: (gameId: number) => joinGame(gameId),
+    onMutate: async (gameId) => {
+      await queryClient.cancelQueries({ queryKey: GAMES_KEY });
+      const prev = queryClient.getQueryData<Game[]>(GAMES_KEY);
+      queryClient.setQueryData<Game[]>(GAMES_KEY, (old = []) =>
+        old.map((g) => {
+          if (g.id !== gameId) return g;
+          const newFilled = (g.game_players?.length ?? 0) + 1;
+          return {
+            ...g,
+            game_players: [
+              ...(g.game_players ?? []),
+              {
+                id: -1,
+                game_id: gameId,
+                player_id: currentUser?.id ?? -1,
+                joined_at: new Date().toISOString(),
+                player: currentUser!,
+              },
+            ],
+            status: newFilled >= g.max_players ? ('full' as const) : g.status,
+          };
+        }),
+      );
+      return { prev };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(GAMES_KEY, ctx.prev);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
+  });
+
+  const leaveMutation = useMutation({
+    mutationFn: (gameId: number) => leaveGame(gameId),
+    onMutate: async (gameId) => {
+      await queryClient.cancelQueries({ queryKey: GAMES_KEY });
+      const prev = queryClient.getQueryData<Game[]>(GAMES_KEY);
+      queryClient.setQueryData<Game[]>(GAMES_KEY, (old = []) =>
+        old.map((g) => {
           if (g.id !== gameId) return g;
           return {
             ...g,
-            game_players: (g.game_players ?? []).filter((p) => p.id !== -1),
+            game_players: (g.game_players ?? []).filter((p) => p.player.id !== currentUser?.id),
             status: 'open' as const,
           };
         }),
       );
-    } finally {
-      setJoiningId(null);
-    }
-  };
-
-  const handleLeave = async (gameId: number) => {
-    setLeavingId(gameId);
-    const snapshot = games.find((g) => g.id === gameId);
-    setGames((prev) =>
-      prev.map((g) => {
-        if (g.id !== gameId) return g;
-        return {
-          ...g,
-          game_players: (g.game_players ?? []).filter((p) => p.player.id !== currentUser?.id),
-          status: 'open' as const,
-        };
-      }),
-    );
-    try {
-      await leaveGame(gameId);
-    } catch {
-      if (snapshot) setGames((prev) => prev.map((g) => (g.id === gameId ? snapshot : g)));
-    } finally {
-      setLeavingId(null);
-    }
-  };
+      return { prev };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(GAMES_KEY, ctx.prev);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
+  });
 
   const openDirections = () => {
     if (!court) return;
     Linking.openURL(`https://maps.google.com/?q=${court.lat},${court.lng}`);
   };
 
-  if (loading || !court) {
+  if (isLoading || !court) {
     return (
       <View className="flex-1 bg-dark justify-center items-center">
         <Text className="text-muted font-sans">Loading…</Text>
@@ -133,7 +123,6 @@ export default function CourtDetailScreen() {
         }}
       />
 
-      {/* Hero image / placeholder */}
       {court.images && court.images.length > 0 ? (
         <Image
           source={{ uri: court.images[0] }}
@@ -157,14 +146,12 @@ export default function CourtDetailScreen() {
         <View className="px-4 pt-4">
           <Text className="font-display text-4xl text-cream mb-1">{court.name}</Text>
 
-          {/* Address + directions */}
           <Pressable onPress={openDirections} className="flex-row items-center gap-1 mb-4">
             <Ionicons name="location-outline" size={14} color="#7A7870" />
             <Text className="text-muted font-sans text-sm">{court.address}</Text>
             <Text className="text-orange font-sans text-sm ml-1">Get directions</Text>
           </Pressable>
 
-          {/* Tags */}
           <View className="flex-row flex-wrap gap-2 mb-6">
             <Badge
               label={court.court_type}
@@ -177,7 +164,6 @@ export default function CourtDetailScreen() {
             {court.is_free && <Badge label="Free" color="#22C55E" />}
           </View>
 
-          {/* Mini map */}
           <MapView
             style={{ height: 140, borderRadius: 12, marginBottom: 24 }}
             customMapStyle={DARK_MAP_STYLE}
@@ -196,7 +182,6 @@ export default function CourtDetailScreen() {
             <Marker coordinate={{ latitude: court.lat, longitude: court.lng }} />
           </MapView>
 
-          {/* Games section */}
           <Text className="font-display text-2xl text-cream mb-3">Games here</Text>
           {games.length === 0 ? (
             <Text className="text-muted font-sans text-sm">No upcoming games.</Text>
@@ -205,15 +190,14 @@ export default function CourtDetailScreen() {
               <GameCard
                 key={g.id}
                 game={g}
-                onJoin={handleJoin}
-                onLeave={handleLeave}
-                joining={joiningId === g.id}
-                leaving={leavingId === g.id}
+                onJoin={(gameId) => joinMutation.mutate(gameId)}
+                onLeave={(gameId) => leaveMutation.mutate(gameId)}
+                joining={joinMutation.isPending && joinMutation.variables === g.id}
+                leaving={leaveMutation.isPending && leaveMutation.variables === g.id}
               />
             ))
           )}
 
-          {/* CTA */}
           <Pressable
             onPress={() => router.push({ pathname: '/games/create', params: { court_id: id } })}
             className="bg-orange rounded-xl py-4 items-center mt-6"

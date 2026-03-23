@@ -3,6 +3,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameForm';
 import { getCourts } from '@/api/courts';
 import { getGame, updateGame } from '@/api/games';
@@ -10,13 +11,22 @@ import { Court } from '@/types';
 
 export default function EditGameScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [courts, setCourts] = useState<Court[]>([]);
-  const [courtsLoading, setCourtsLoading] = useState(true);
-  const [gameLoading, setGameLoading] = useState(true);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const { data: game, isLoading: gameLoading } = useQuery({
+    queryKey: ['game', id],
+    queryFn: () => getGame(Number(id)),
+    enabled: !!id,
+  });
+
+  const { data: courts = [], isLoading: courtsLoading } = useQuery({
+    queryKey: ['courts', { city: 'Christchurch' }],
+    queryFn: () => getCourts({ city: 'Christchurch' }),
+  });
 
   const {
     control,
@@ -30,40 +40,34 @@ export default function EditGameScreen() {
   });
 
   useEffect(() => {
-    (async () => {
-      try {
-        const [game, courtList] = await Promise.all([
-          getGame(Number(id)),
-          getCourts({ city: 'Christchurch' }),
-        ]);
-        setCourts(courtList);
+    if (!game || courts.length === 0) return;
+    const court = courts.find((c) => c.id === game.court_id) ?? game.court ?? null;
+    setSelectedCourt(court);
+    reset({
+      court_id: game.court_id,
+      title: game.title,
+      description: game.description ?? undefined,
+      starts_at: new Date(game.starts_at),
+      duration_mins: game.duration_mins,
+      max_players: game.max_players,
+      skill_level: game.skill_level,
+      game_type: game.game_type,
+    });
+  }, [game?.id, courts.length]);
 
-        const court = courtList.find((c) => c.id === game.court_id) ?? game.court ?? null;
-        setSelectedCourt(court);
-
-        reset({
-          court_id: game.court_id,
-          title: game.title,
-          description: game.description ?? undefined,
-          starts_at: new Date(game.starts_at),
-          duration_mins: game.duration_mins,
-          max_players: game.max_players,
-          skill_level: game.skill_level,
-          game_type: game.game_type,
-        });
-      } catch {
-        setApiError('Failed to load game.');
-      } finally {
-        setGameLoading(false);
-        setCourtsLoading(false);
-      }
-    })();
-  }, [id, reset]);
+  const updateMutation = useMutation({
+    mutationFn: (data: Partial<typeof game>) => updateGame(Number(id), data!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game', id] });
+      router.back();
+    },
+    onError: () => setApiError('Failed to save changes. Please try again.'),
+  });
 
   const onSubmit = async (data: GameFormData) => {
     setApiError(null);
     try {
-      await updateGame(Number(id), {
+      await updateMutation.mutateAsync({
         court_id: data.court_id,
         title: data.title,
         description: data.description ?? null,
@@ -73,9 +77,8 @@ export default function EditGameScreen() {
         skill_level: data.skill_level,
         game_type: data.game_type,
       });
-      router.back();
     } catch {
-      setApiError('Failed to save changes. Please try again.');
+      // handled by onError
     }
   };
 

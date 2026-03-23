@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { getCourt, updateCourt } from '@/api/courts';
 import { SegmentedControl } from '@/components/forms/SegmentedControl';
 import { Toggle } from '@/components/forms/Toggle';
@@ -22,11 +23,13 @@ type FormData = z.infer<typeof schema>;
 export default function EditCourtScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const [courtName, setCourtName] = useState('');
-  const [courtAddress, setCourtAddress] = useState('');
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { data: court, isLoading: initialLoading } = useQuery({
+    queryKey: ['court', id],
+    queryFn: () => getCourt(Number(id)),
+    enabled: !!id,
+  });
 
   const { control, handleSubmit, reset } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -40,37 +43,35 @@ export default function EditCourtScreen() {
   });
 
   useEffect(() => {
-    getCourt(Number(id))
-      .then((court) => {
-        setCourtName(court.name);
-        setCourtAddress(court.address);
-        reset({
-          court_type: court.court_type,
-          surface: court.surface,
-          full_court: court.full_court,
-          lit: court.lit,
-          is_free: court.is_free,
-        });
-      })
-      .catch(() => setError('Failed to load court'))
-      .finally(() => setInitialLoading(false));
-  }, [id]);
+    if (!court) return;
+    reset({
+      court_type: court.court_type,
+      surface: court.surface,
+      full_court: court.full_court,
+      lit: court.lit,
+      is_free: court.is_free,
+    });
+  }, [court?.id]);
 
-  const onSubmit = async (data: FormData) => {
-    setSaving(true);
-    setError(null);
-    try {
-      await updateCourt(Number(id), data);
+  const updateMutation = useMutation({
+    mutationFn: (data: FormData) => updateCourt(Number(id), data),
+    onSuccess: () => {
       Burnt.alert({
         title: 'Thanks for your update 🙌',
         message: "We'll review it and get it live soon.",
         preset: 'done',
       });
       router.back();
+    },
+    onError: () => setError('Failed to save changes'),
+  });
+
+  const onSubmit = async (data: FormData) => {
+    setError(null);
+    try {
+      await updateMutation.mutateAsync(data);
     } catch {
-      setError('Failed to save changes');
-    } finally {
-      setSaving(false);
+      // handled by onError
     }
   };
 
@@ -87,16 +88,14 @@ export default function EditCourtScreen() {
       className="flex-1 bg-dark"
       contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
     >
-      {/* Court identity — display only */}
       <View
         className="mb-6 pb-5"
         style={{ borderBottomWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)' }}
       >
-        <Text className="font-display text-2xl text-cream">{courtName}</Text>
-        <Text className="text-muted font-sans text-sm mt-1">{courtAddress}</Text>
+        <Text className="font-display text-2xl text-cream">{court?.name}</Text>
+        <Text className="text-muted font-sans text-sm mt-1">{court?.address}</Text>
       </View>
 
-      {/* Court type */}
       <Controller
         control={control}
         name="court_type"
@@ -113,7 +112,6 @@ export default function EditCourtScreen() {
         )}
       />
 
-      {/* Surface */}
       <Controller
         control={control}
         name="surface"
@@ -131,7 +129,6 @@ export default function EditCourtScreen() {
         )}
       />
 
-      {/* Full / Half court */}
       <Controller
         control={control}
         name="full_court"
@@ -148,7 +145,6 @@ export default function EditCourtScreen() {
         )}
       />
 
-      {/* Toggles */}
       <View className="mb-6">
         <Controller
           control={control}
@@ -170,11 +166,11 @@ export default function EditCourtScreen() {
 
       <Pressable
         onPress={handleSubmit(onSubmit)}
-        disabled={saving}
+        disabled={updateMutation.isPending}
         className="bg-orange rounded-xl py-4 items-center"
-        style={{ opacity: saving ? 0.6 : 1 }}
+        style={{ opacity: updateMutation.isPending ? 0.6 : 1 }}
       >
-        {saving ? (
+        {updateMutation.isPending ? (
           <ActivityIndicator color="#F0EDE8" />
         ) : (
           <Text className="text-cream font-sans font-semibold text-base">Save changes</Text>

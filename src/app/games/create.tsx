@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameForm';
 import { getCourts } from '@/api/courts';
 import { createGame } from '@/api/games';
@@ -9,12 +10,16 @@ import { Court } from '@/types';
 
 export default function CreateGameScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { court_id: courtIdParam } = useLocalSearchParams<{ court_id?: string }>();
 
-  const [courts, setCourts] = useState<Court[]>([]);
-  const [courtsLoading, setCourtsLoading] = useState(true);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const { data: courts = [], isLoading: courtsLoading } = useQuery({
+    queryKey: ['courts', { city: 'Christchurch' }],
+    queryFn: () => getCourts({ city: 'Christchurch' }),
+  });
 
   const {
     control,
@@ -39,29 +44,28 @@ export default function CreateGameScreen() {
   });
 
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await getCourts({ city: 'Christchurch' });
-        setCourts(data);
-        if (courtIdParam) {
-          const prefilled = data.find((c) => c.id === Number(courtIdParam));
-          if (prefilled) {
-            setSelectedCourt(prefilled);
-            setValue('court_id', prefilled.id);
-          }
-        }
-      } catch {
-        // silently fail — courts list is still usable via the modal
-      } finally {
-        setCourtsLoading(false);
+    if (courtIdParam && courts.length > 0) {
+      const prefilled = courts.find((c) => c.id === Number(courtIdParam));
+      if (prefilled) {
+        setSelectedCourt(prefilled);
+        setValue('court_id', prefilled.id);
       }
-    })();
-  }, [courtIdParam, setValue]);
+    }
+  }, [courtIdParam, courts]);
+
+  const createMutation = useMutation({
+    mutationFn: createGame,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['games'] });
+      router.replace('/(tabs)/games');
+    },
+    onError: () => setApiError('Failed to post game. Please try again.'),
+  });
 
   const onSubmit = async (data: GameFormData) => {
     setApiError(null);
     try {
-      await createGame({
+      await createMutation.mutateAsync({
         court_id: data.court_id,
         title: data.title,
         description: data.description,
@@ -71,9 +75,8 @@ export default function CreateGameScreen() {
         skill_level: data.skill_level,
         game_type: data.game_type,
       });
-      router.replace('/(tabs)/games');
     } catch {
-      setApiError('Failed to post game. Please try again.');
+      // handled by onError
     }
   };
 

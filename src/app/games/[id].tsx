@@ -1,47 +1,50 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, Image } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getGame, joinGame, leaveGame, updateGame } from '@/api/games';
-import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { BasketballCourtSVG } from '@/components/games/BasketballCourtSVG';
+import { initials, formatDate, formatDuration, SKILL_COLORS } from '@/utils/formatters';
 
 const HERO_HEIGHT = 220;
-import { initials, formatDate, formatDuration } from '@/utils/formatters';
-
-const SKILL_COLORS: Record<Game['skill_level'], string> = {
-  beginner: '#3B82F6',
-  intermediate: '#FF5C00',
-  advanced: '#F59E0B',
-  comp: '#EF4444',
-  any: '#22C55E',
-};
 
 export default function GameDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
 
-  const [game, setGame] = useState<Game | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
+  const {
+    data: game,
+    isLoading: loading,
+    error,
+  } = useQuery({
+    queryKey: ['game', id],
+    queryFn: () => getGame(Number(id)),
+    enabled: !!id,
+  });
 
-  const fetchGame = useCallback(async () => {
-    try {
-      setError(null);
-      const data = await getGame(Number(id));
-      setGame(data);
-    } catch {
-      setError('Failed to load game');
-    }
-  }, [id]);
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['game', id] });
 
-  useEffect(() => {
-    setLoading(true);
-    fetchGame().finally(() => setLoading(false));
-  }, [fetchGame]);
+  const joinMutation = useMutation({
+    mutationFn: () => joinGame(game!.id),
+    onSuccess: invalidate,
+    onError: () => Alert.alert('Error', 'Could not join game. Please try again.'),
+  });
+
+  const leaveMutation = useMutation({
+    mutationFn: () => leaveGame(game!.id),
+    onSuccess: invalidate,
+    onError: () => Alert.alert('Error', 'Could not leave game. Please try again.'),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => updateGame(game!.id, { status: 'cancelled' }),
+    onSuccess: () => router.back(),
+    onError: () => Alert.alert('Error', 'Could not cancel game. Please try again.'),
+  });
 
   if (loading) {
     return (
@@ -54,76 +57,37 @@ export default function GameDetailScreen() {
   if (error || !game) {
     return (
       <View className="flex-1 bg-dark justify-center items-center px-8">
-        <Text className="text-muted font-sans text-center">{error ?? 'Game not found'}</Text>
+        <Text className="text-muted font-sans text-center">
+          {error ? 'Failed to load game' : 'Game not found'}
+        </Text>
       </View>
     );
   }
 
   const confirmedPlayers = game.game_players ?? [];
-  console.log('confirmedPlayers', confirmedPlayers);
   const filled = confirmedPlayers.length;
   const emptySlots = Math.max(0, game.max_players - filled);
   const isHost = currentUser?.id === game.host_id;
   const hasJoined = !isHost && confirmedPlayers.some((p) => p.player_id === currentUser?.id);
-  console.log(hasJoined);
-  console.log(currentUser);
   const isActive = game.status === 'open' || game.status === 'full';
   const isFull = filled >= game.max_players || game.status === 'full';
-
-  const handleJoin = async () => {
-    setActionLoading(true);
-    try {
-      await joinGame(game.id);
-      await fetchGame();
-    } catch {
-      Alert.alert('Error', 'Could not join game. Please try again.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+  const actionLoading =
+    joinMutation.isPending || leaveMutation.isPending || cancelMutation.isPending;
+  const skillColor = SKILL_COLORS[game.skill_level] ?? '#7A7870';
 
   const handleLeave = () => {
     Alert.alert('Leave game', 'Are you sure you want to leave this game?', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Leave',
-        style: 'destructive',
-        onPress: async () => {
-          setActionLoading(true);
-          try {
-            await leaveGame(game.id);
-            await fetchGame();
-          } catch {
-            Alert.alert('Error', 'Could not leave game. Please try again.');
-          } finally {
-            setActionLoading(false);
-          }
-        },
-      },
+      { text: 'Leave', style: 'destructive', onPress: () => leaveMutation.mutate() },
     ]);
   };
 
   const handleCancel = () => {
     Alert.alert('Cancel game', 'Are you sure you want to cancel this game?', [
       { text: 'Keep it', style: 'cancel' },
-      {
-        text: 'Cancel game',
-        style: 'destructive',
-        onPress: async () => {
-          setActionLoading(true);
-          try {
-            await updateGame(game.id, { status: 'cancelled' });
-            router.back();
-          } catch {
-            Alert.alert('Error', 'Could not cancel game. Please try again.');
-            setActionLoading(false);
-          }
-        },
-      },
+      { text: 'Cancel game', style: 'destructive', onPress: () => cancelMutation.mutate() },
     ]);
   };
-
-  const skillColor = SKILL_COLORS[game.skill_level] ?? '#7A7870';
 
   return (
     <View className="flex-1 bg-dark">
@@ -153,7 +117,6 @@ export default function GameDetailScreen() {
         ) : (
           <BasketballCourtSVG height={HERO_HEIGHT} />
         )}
-        {/* Overlay: game type + skill level */}
         <View
           style={{
             position: 'absolute',
@@ -235,7 +198,7 @@ export default function GameDetailScreen() {
             </View>
           </View>
 
-          {/* Info list — 4 rows */}
+          {/* Info list */}
           <View
             className="rounded-xl mb-5"
             style={{
@@ -244,7 +207,6 @@ export default function GameDetailScreen() {
               borderColor: 'rgba(255,255,255,0.08)',
             }}
           >
-            {/* Date & Time */}
             <View className="flex-row items-center gap-3 px-4 py-3">
               <Ionicons name="calendar-outline" size={18} color="#FF5C00" />
               <Text className="text-muted font-sans text-sm flex-1">Date & Time</Text>
@@ -253,7 +215,6 @@ export default function GameDetailScreen() {
               </Text>
             </View>
             <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-            {/* Duration */}
             <View className="flex-row items-center gap-3 px-4 py-3">
               <Ionicons name="time-outline" size={18} color="#FF5C00" />
               <Text className="text-muted font-sans text-sm flex-1">Duration</Text>
@@ -262,7 +223,6 @@ export default function GameDetailScreen() {
               </Text>
             </View>
             <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-            {/* Location */}
             <Pressable
               className="flex-row items-center gap-3 px-4 py-3"
               onPress={() => router.push(`/courts/${game.court_id}`)}
@@ -274,7 +234,6 @@ export default function GameDetailScreen() {
               </Text>
             </Pressable>
             <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-            {/* Skill level */}
             <View className="flex-row items-center gap-3 px-4 py-3">
               <Ionicons name="basketball-outline" size={18} color="#FF5C00" />
               <Text className="text-muted font-sans text-sm flex-1">Skill level</Text>
@@ -369,7 +328,7 @@ export default function GameDetailScreen() {
               className="rounded-xl py-4 items-center"
               style={{ backgroundColor: '#EF444422' }}
             >
-              {actionLoading ? (
+              {cancelMutation.isPending ? (
                 <ActivityIndicator size="small" color="#EF4444" />
               ) : (
                 <Text className="font-sans font-semibold text-base" style={{ color: '#EF4444' }}>
@@ -395,7 +354,7 @@ export default function GameDetailScreen() {
               borderColor: 'rgba(255,255,255,0.08)',
             }}
           >
-            {actionLoading ? (
+            {leaveMutation.isPending ? (
               <ActivityIndicator size="small" color="#7A7870" />
             ) : (
               <Text className="font-sans font-semibold text-base text-muted">Leave game</Text>
@@ -403,12 +362,12 @@ export default function GameDetailScreen() {
           </Pressable>
         ) : (
           <Pressable
-            onPress={isFull ? undefined : handleJoin}
+            onPress={isFull ? undefined : () => joinMutation.mutate()}
             disabled={isFull || actionLoading}
             className="rounded-xl py-4 items-center"
             style={{ backgroundColor: isFull ? 'rgba(255,255,255,0.08)' : '#FF5C00' }}
           >
-            {actionLoading ? (
+            {joinMutation.isPending ? (
               <ActivityIndicator size="small" color="#F0EDE8" />
             ) : (
               <Text
