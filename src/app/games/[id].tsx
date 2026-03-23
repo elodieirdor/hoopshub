@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getGame, joinGame, leaveGame, updateGame } from '@/api/games';
 import { useAuthStore } from '@/store/authStore';
 import { BasketballCourtSVG } from '@/components/games/BasketballCourtSVG';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { initials, formatDate, formatDuration, SKILL_COLORS } from '@/utils/formatters';
 
 const HERO_HEIGHT = 220;
@@ -20,6 +21,7 @@ export default function GameDetailScreen() {
     data: game,
     isLoading: loading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['game', id],
     queryFn: () => getGame(Number(id)),
@@ -56,10 +58,8 @@ export default function GameDetailScreen() {
 
   if (error || !game) {
     return (
-      <View className="flex-1 bg-dark justify-center items-center px-8">
-        <Text className="text-muted font-sans text-center">
-          {error ? 'Failed to load game' : 'Game not found'}
-        </Text>
+      <View className="flex-1 bg-dark">
+        <ErrorState message={error ? 'Failed to load game' : 'Game not found'} onRetry={refetch} />
       </View>
     );
   }

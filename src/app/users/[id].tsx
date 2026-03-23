@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPublicProfile } from '@/api/profiles';
 import { Badge } from '@/components/ui/Badge';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { SKILL_COLORS, initials, formatDate } from '@/utils/formatters';
 
 const AVATAR_PALETTE = ['#3B82F6', '#22C55E', '#F59E0B', '#8B5CF6', '#06B6D4', '#EF4444'];
@@ -41,7 +42,12 @@ export default function PublicProfileScreen() {
   const router = useRouter();
   const { top } = useSafeAreaInsets();
 
-  const { data: profile, isLoading, error } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['user', id],
     queryFn: () => getPublicProfile(Number(id)),
     enabled: !!id,
@@ -65,8 +71,8 @@ export default function PublicProfileScreen() {
 
   if (error || !profile) {
     return (
-      <View className="flex-1 bg-dark justify-center items-center px-8">
-        <Text className="text-muted font-sans text-center">Failed to load profile</Text>
+      <View className="flex-1 bg-dark">
+        <ErrorState message="Failed to load profile" onRetry={refetch} />
       </View>
     );
   }
@@ -153,9 +159,7 @@ export default function PublicProfileScreen() {
             </View>
             <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
             <View className="flex-1 items-center py-4">
-              <Text className="font-display text-3xl text-cream">
-                {profile.hosted_count ?? 0}
-              </Text>
+              <Text className="font-display text-3xl text-cream">{profile.hosted_count ?? 0}</Text>
               <Text className="text-muted font-sans text-xs mt-0.5">Hosted</Text>
             </View>
           </View>
@@ -214,10 +218,7 @@ export default function PublicProfileScreen() {
               profile.recent_games.map((game) => (
                 <View key={game.id}>
                   <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-                  <Pressable
-                    className="px-4 py-3"
-                    onPress={() => router.push(`/games/${game.id}`)}
-                  >
+                  <Pressable className="px-4 py-3" onPress={() => router.push(`/games/${game.id}`)}>
                     <Text className="text-cream font-sans font-semibold text-sm mb-1">
                       {game.title}
                     </Text>

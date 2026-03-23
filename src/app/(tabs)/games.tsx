@@ -8,6 +8,7 @@ import { Game } from '@/types';
 import { GameCard } from '@/components/games/GameCard';
 import { GameCardSkeleton } from '@/components/games/GameCardSkeleton';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useGames } from '@/hooks/useGames';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type FilterKey, applyFilters } from '@/utils/gameFilters';
@@ -127,9 +128,7 @@ export default function GamesScreen() {
           ))}
         </View>
       ) : error ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-muted font-sans text-center">{error}</Text>
-        </View>
+        <ErrorState message={error} onRetry={refresh} />
       ) : (
         <FlatList
           data={filtered}
