@@ -258,7 +258,10 @@ export default function GameDetailScreen() {
             {confirmedPlayers.map((gp, i) => (
               <View key={gp.id}>
                 {i > 0 && <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />}
-                <View className="flex-row items-center gap-3 px-4 py-3">
+                <Pressable
+                  className="flex-row items-center gap-3 px-4 py-3"
+                  onPress={() => router.push(`/users/${gp.player_id}`)}
+                >
                   <View
                     className="rounded-full items-center justify-center"
                     style={{ width: 36, height: 36, backgroundColor: '#FF5C00' }}
@@ -273,7 +276,7 @@ export default function GameDetailScreen() {
                   {gp.player_id === game.host_id && (
                     <Text className="text-orange font-sans text-xs">Host</Text>
                   )}
-                </View>
+                </Pressable>
               </View>
             ))}
             {Array.from({ length: emptySlots }).map((_, i) => (
