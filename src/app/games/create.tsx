@@ -1,67 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ScrollView,
-  Modal,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
-import { FormInput } from '@/components/ui/form-input';
+import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameForm';
 import { getCourts } from '@/api/courts';
 import { createGame } from '@/api/games';
 import { Court } from '@/types';
-
-const schema = z.object({
-  court_id: z.number({ error: 'Select a court' }),
-  title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().optional(),
-  starts_at: z.date({ error: 'Select a date and time' }),
-  duration_mins: z.number(),
-  max_players: z.number(),
-  skill_level: z.enum(['beginner', 'intermediate', 'advanced', 'comp', 'any']),
-  game_type: z.enum(['3v3', '5v5', 'casual']),
-});
-
-type FormData = z.infer<typeof schema>;
-
-const DURATIONS: { value: number; label: string }[] = [
-  { value: 60, label: '60 min' },
-  { value: 90, label: '90 min' },
-  { value: 120, label: '2 hrs' },
-  { value: 180, label: '3 hrs' },
-];
-
-const MAX_PLAYERS: { value: number; label: string }[] = [
-  { value: 6, label: '6' },
-  { value: 8, label: '8' },
-  { value: 10, label: '10' },
-  { value: 12, label: '12' },
-];
-
-const SKILL_LEVELS: { value: FormData['skill_level']; label: string }[] = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-  { value: 'comp', label: 'Comp' },
-  { value: 'any', label: 'Any' },
-];
-
-const GAME_TYPES: { value: FormData['game_type']; label: string }[] = [
-  { value: '3v3', label: '3v3' },
-  { value: '5v5', label: '5v5' },
-  { value: 'casual', label: 'Casual' },
-];
 
 export default function CreateGameScreen() {
   const router = useRouter();
@@ -70,11 +14,7 @@ export default function CreateGameScreen() {
   const [courts, setCourts] = useState<Court[]>([]);
   const [courtsLoading, setCourtsLoading] = useState(true);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
-  const [courtModalVisible, setCourtModalVisible] = useState(false);
-
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const {
     control,
@@ -82,8 +22,8 @@ export default function CreateGameScreen() {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  } = useForm<GameFormData>({
+    resolver: zodResolver(gameFormSchema),
     defaultValues: {
       duration_mins: 90,
       max_players: 10,
@@ -98,8 +38,6 @@ export default function CreateGameScreen() {
     },
   });
 
-  const startsAt = watch('starts_at');
-
   useEffect(() => {
     (async () => {
       try {
@@ -113,15 +51,15 @@ export default function CreateGameScreen() {
           }
         }
       } catch {
-        // silently fail
+        // silently fail — courts list is still usable via the modal
       } finally {
         setCourtsLoading(false);
       }
     })();
   }, [courtIdParam, setValue]);
 
-  const onSubmit = async (data: FormData) => {
-    setError(null);
+  const onSubmit = async (data: GameFormData) => {
+    setApiError(null);
     try {
       await createGame({
         court_id: data.court_id,
@@ -135,386 +73,28 @@ export default function CreateGameScreen() {
       });
       router.replace('/(tabs)/games');
     } catch {
-      setError('Failed to post game. Please try again.');
+      setApiError('Failed to post game. Please try again.');
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        className="flex-1 bg-dark"
-        contentContainerClassName="px-6 py-12"
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header */}
-        <View className="flex-row items-center justify-between mb-8">
-          <Text className="font-display text-4xl text-cream">POST A GAME</Text>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Ionicons name="close" size={24} color="#F0EDE8" />
-          </Pressable>
-        </View>
-
-        {/* Court selector */}
-        <View className="mb-4">
-          <Text className="text-cream font-sans text-sm mb-2">Court</Text>
-          <Pressable
-            onPress={() => setCourtModalVisible(true)}
-            className="bg-surface rounded-xl px-4 py-4 flex-row items-center justify-between"
-          >
-            {courtsLoading ? (
-              <ActivityIndicator size="small" color="#7A7870" />
-            ) : (
-              <>
-                <Text
-                  className={
-                    selectedCourt
-                      ? 'text-cream font-sans text-base'
-                      : 'text-muted font-sans text-base'
-                  }
-                >
-                  {selectedCourt ? selectedCourt.name : 'Select a court…'}
-                </Text>
-                <Ionicons name="chevron-down" size={16} color="#7A7870" />
-              </>
-            )}
-          </Pressable>
-          {errors.court_id && (
-            <Text className="text-danger text-sm mt-1 font-sans">{errors.court_id.message}</Text>
-          )}
-        </View>
-
-        {/* Title */}
-        <View className="mb-4">
-          <Controller
-            control={control}
-            name="title"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <FormInput
-                label="Title"
-                placeholder="e.g. Saturday Morning Run"
-                autoCorrect={false}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                error={errors.title?.message}
-              />
-            )}
-          />
-        </View>
-
-        {/* Date & time */}
-        <View className="mb-4">
-          <Text className="text-cream font-sans text-sm mb-2">Date & time</Text>
-          <View className="flex-row gap-3">
-            <Pressable
-              onPress={() => setShowDatePicker(true)}
-              className="flex-1 bg-surface rounded-xl px-4 py-4 flex-row items-center gap-2"
-            >
-              <Ionicons name="calendar-outline" size={16} color="#7A7870" />
-              <Text className="text-cream font-sans text-sm">
-                {startsAt
-                  ? startsAt.toLocaleDateString('en-NZ', {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                    })
-                  : 'Date'}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setShowTimePicker(true)}
-              className="flex-1 bg-surface rounded-xl px-4 py-4 flex-row items-center gap-2"
-            >
-              <Ionicons name="time-outline" size={16} color="#7A7870" />
-              <Text className="text-cream font-sans text-sm">
-                {startsAt
-                  ? startsAt.toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })
-                  : 'Time'}
-              </Text>
-            </Pressable>
-          </View>
-          {errors.starts_at && (
-            <Text className="text-danger text-sm mt-1 font-sans">{errors.starts_at.message}</Text>
-          )}
-        </View>
-
-        {showDatePicker && (
-          <Controller
-            control={control}
-            name="starts_at"
-            render={({ field: { onChange, value } }) => (
-              <DateTimePicker
-                mode="date"
-                value={value ?? new Date()}
-                minimumDate={new Date()}
-                display="spinner"
-                themeVariant="dark"
-                onChange={(_, date) => {
-                  setShowDatePicker(false);
-                  if (date) {
-                    const updated = new Date(value ?? new Date());
-                    updated.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-                    onChange(updated);
-                  }
-                }}
-              />
-            )}
-          />
-        )}
-
-        {showTimePicker && (
-          <Controller
-            control={control}
-            name="starts_at"
-            render={({ field: { onChange, value } }) => (
-              <DateTimePicker
-                mode="time"
-                value={value ?? new Date()}
-                display="spinner"
-                themeVariant="dark"
-                minuteInterval={15}
-                onChange={(_, date) => {
-                  setShowTimePicker(false);
-                  if (date) {
-                    const updated = new Date(value ?? new Date());
-                    updated.setHours(date.getHours(), date.getMinutes());
-                    onChange(updated);
-                  }
-                }}
-              />
-            )}
-          />
-        )}
-
-        {/* Duration */}
-        <View className="mb-4">
-          <Text className="text-cream font-sans text-sm mb-3">Duration</Text>
-          <Controller
-            control={control}
-            name="duration_mins"
-            render={({ field: { onChange, value } }) => (
-              <View className="flex-row gap-2 flex-wrap">
-                {DURATIONS.map(({ value: v, label }) => {
-                  const active = value === v;
-                  return (
-                    <Pressable
-                      key={v}
-                      onPress={() => onChange(v)}
-                      className={
-                        active
-                          ? 'bg-orange rounded-full px-4 py-2'
-                          : 'bg-surface border border-border rounded-full px-4 py-2'
-                      }
-                    >
-                      <Text
-                        className={
-                          active ? 'text-cream font-sans text-sm' : 'text-muted font-sans text-sm'
-                        }
-                      >
-                        {label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
-          />
-        </View>
-
-        {/* Max players */}
-        <View className="mb-4">
-          <Text className="text-cream font-sans text-sm mb-3">Max players</Text>
-          <Controller
-            control={control}
-            name="max_players"
-            render={({ field: { onChange, value } }) => (
-              <View className="flex-row gap-2 flex-wrap">
-                {MAX_PLAYERS.map(({ value: v, label }) => {
-                  const active = value === v;
-                  return (
-                    <Pressable
-                      key={v}
-                      onPress={() => onChange(v)}
-                      className={
-                        active
-                          ? 'bg-orange rounded-full px-4 py-2'
-                          : 'bg-surface border border-border rounded-full px-4 py-2'
-                      }
-                    >
-                      <Text
-                        className={
-                          active ? 'text-cream font-sans text-sm' : 'text-muted font-sans text-sm'
-                        }
-                      >
-                        {label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
-          />
-        </View>
-
-        {/* Skill level */}
-        <View className="mb-4">
-          <Text className="text-cream font-sans text-sm mb-3">Skill level</Text>
-          <Controller
-            control={control}
-            name="skill_level"
-            render={({ field: { onChange, value } }) => (
-              <View className="flex-row gap-2 flex-wrap">
-                {SKILL_LEVELS.map(({ value: v, label }) => {
-                  const active = value === v;
-                  return (
-                    <Pressable
-                      key={v}
-                      onPress={() => onChange(v)}
-                      className={
-                        active
-                          ? 'bg-orange rounded-full px-4 py-2'
-                          : 'bg-surface border border-border rounded-full px-4 py-2'
-                      }
-                    >
-                      <Text
-                        className={
-                          active ? 'text-cream font-sans text-sm' : 'text-muted font-sans text-sm'
-                        }
-                      >
-                        {label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
-          />
-          {errors.skill_level && (
-            <Text className="text-danger text-sm mt-1 font-sans">{errors.skill_level.message}</Text>
-          )}
-        </View>
-
-        {/* Game type */}
-        <View className="mb-6">
-          <Text className="text-cream font-sans text-sm mb-3">Game type</Text>
-          <Controller
-            control={control}
-            name="game_type"
-            render={({ field: { onChange, value } }) => (
-              <View className="flex-row gap-2 flex-wrap">
-                {GAME_TYPES.map(({ value: v, label }) => {
-                  const active = value === v;
-                  return (
-                    <Pressable
-                      key={v}
-                      onPress={() => onChange(v)}
-                      className={
-                        active
-                          ? 'bg-orange rounded-full px-4 py-2'
-                          : 'bg-surface border border-border rounded-full px-4 py-2'
-                      }
-                    >
-                      <Text
-                        className={
-                          active ? 'text-cream font-sans text-sm' : 'text-muted font-sans text-sm'
-                        }
-                      >
-                        {label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
-          />
-        </View>
-
-        {/* Description */}
-        <View className="mb-8">
-          <Text className="text-cream font-sans text-sm mb-2">Description (optional)</Text>
-          <Controller
-            control={control}
-            name="description"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <View className="bg-surface rounded-xl px-4 py-3">
-                <TextInput
-                  className="text-cream font-sans text-base"
-                  placeholder="Any extra details…"
-                  placeholderTextColor="#7A7870"
-                  multiline
-                  numberOfLines={3}
-                  autoCorrect={false}
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  style={{ minHeight: 72, textAlignVertical: 'top' }}
-                />
-              </View>
-            )}
-          />
-        </View>
-
-        {/* API error */}
-        {error && <Text className="text-danger text-sm mb-4 font-sans text-center">{error}</Text>}
-
-        {/* Submit */}
-        <Pressable
-          className="bg-orange rounded-xl py-4 items-center"
-          onPress={handleSubmit(onSubmit)}
-          disabled={isSubmitting}
-        >
-          <Text className="text-cream font-sans text-base font-semibold">
-            {isSubmitting ? 'Posting…' : 'Post game'}
-          </Text>
-        </Pressable>
-      </ScrollView>
-
-      {/* Court picker modal */}
-      <Modal
-        visible={courtModalVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setCourtModalVisible(false)}
-      >
-        <View className="flex-1 bg-dark pt-6">
-          <View className="flex-row items-center justify-between px-6 mb-4">
-            <Text className="font-display text-3xl text-cream">SELECT COURT</Text>
-            <Pressable onPress={() => setCourtModalVisible(false)} hitSlop={12}>
-              <Ionicons name="close" size={24} color="#F0EDE8" />
-            </Pressable>
-          </View>
-
-          <FlatList
-            data={courts}
-            keyExtractor={(c) => c.id.toString()}
-            contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 32 }}
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() => {
-                  setSelectedCourt(item);
-                  setValue('court_id', item.id, { shouldValidate: true });
-                  setCourtModalVisible(false);
-                }}
-                className="py-4 border-b border-border flex-row items-center justify-between"
-              >
-                <View className="flex-1 mr-4">
-                  <Text className="text-cream font-sans text-base font-semibold">{item.name}</Text>
-                  <Text className="text-muted font-sans text-sm mt-0.5">{item.address}</Text>
-                </View>
-                {selectedCourt?.id === item.id && (
-                  <Ionicons name="checkmark-circle" size={20} color="#FF5C00" />
-                )}
-              </Pressable>
-            )}
-            ListEmptyComponent={
-              <Text className="text-muted font-sans text-center pt-8">No courts found.</Text>
-            }
-          />
-        </View>
-      </Modal>
-    </KeyboardAvoidingView>
+    <GameForm
+      heading="POST A GAME"
+      onClose={() => router.back()}
+      control={control}
+      errors={errors}
+      handleSubmit={handleSubmit}
+      setValue={setValue}
+      watch={watch}
+      onSubmit={onSubmit}
+      submitLabel="Post game"
+      submittingLabel="Posting…"
+      isSubmitting={isSubmitting}
+      apiError={apiError}
+      courts={courts}
+      courtsLoading={courtsLoading}
+      selectedCourt={selectedCourt}
+      onSelectCourt={setSelectedCourt}
+    />
   );
 }
