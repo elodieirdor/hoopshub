@@ -1,0 +1,4 @@
+# Generated files — do not format
+src/uniwind-types.d.ts
+expo-env.d.ts
+nativewind-env.d.ts
