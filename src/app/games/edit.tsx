@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameForm';
 import { getCourts } from '@/api/courts';
-import { createGame } from '@/api/games';
+import { getGame, updateGame } from '@/api/games';
 import { Court } from '@/types';
 
-export default function CreateGameScreen() {
+export default function EditGameScreen() {
   const router = useRouter();
-  const { court_id: courtIdParam } = useLocalSearchParams<{ court_id?: string }>();
+  const { id } = useLocalSearchParams<{ id: string }>();
 
   const [courts, setCourts] = useState<Court[]>([]);
   const [courtsLoading, setCourtsLoading] = useState(true);
+  const [gameLoading, setGameLoading] = useState(true);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -21,65 +23,73 @@ export default function CreateGameScreen() {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<GameFormData>({
     resolver: zodResolver(gameFormSchema),
-    defaultValues: {
-      duration_mins: 90,
-      max_players: 10,
-      skill_level: 'any',
-      game_type: 'casual',
-      starts_at: (() => {
-        const d = new Date();
-        d.setMinutes(0, 0, 0);
-        d.setHours(d.getHours() + 1);
-        return d;
-      })(),
-    },
   });
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await getCourts({ city: 'Christchurch' });
-        setCourts(data);
-        if (courtIdParam) {
-          const prefilled = data.find((c) => c.id === Number(courtIdParam));
-          if (prefilled) {
-            setSelectedCourt(prefilled);
-            setValue('court_id', prefilled.id);
-          }
-        }
+        const [game, courtList] = await Promise.all([
+          getGame(Number(id)),
+          getCourts({ city: 'Christchurch' }),
+        ]);
+        setCourts(courtList);
+
+        const court = courtList.find((c) => c.id === game.court_id) ?? game.court ?? null;
+        setSelectedCourt(court);
+
+        reset({
+          court_id: game.court_id,
+          title: game.title,
+          description: game.description ?? undefined,
+          starts_at: new Date(game.starts_at),
+          duration_mins: game.duration_mins,
+          max_players: game.max_players,
+          skill_level: game.skill_level,
+          game_type: game.game_type,
+        });
       } catch {
-        // silently fail — courts list is still usable via the modal
+        setApiError('Failed to load game.');
       } finally {
+        setGameLoading(false);
         setCourtsLoading(false);
       }
     })();
-  }, [courtIdParam, setValue]);
+  }, [id, reset]);
 
   const onSubmit = async (data: GameFormData) => {
     setApiError(null);
     try {
-      await createGame({
+      await updateGame(Number(id), {
         court_id: data.court_id,
         title: data.title,
-        description: data.description,
+        description: data.description ?? null,
         starts_at: data.starts_at.toISOString(),
         duration_mins: data.duration_mins,
         max_players: data.max_players,
         skill_level: data.skill_level,
         game_type: data.game_type,
       });
-      router.replace('/(tabs)/games');
+      router.back();
     } catch {
-      setApiError('Failed to post game. Please try again.');
+      setApiError('Failed to save changes. Please try again.');
     }
   };
 
+  if (gameLoading) {
+    return (
+      <View className="flex-1 bg-dark justify-center items-center">
+        <ActivityIndicator color="#FF5C00" />
+      </View>
+    );
+  }
+
   return (
     <GameForm
-      heading="POST A GAME"
+      heading="EDIT GAME"
       onClose={() => router.back()}
       control={control}
       errors={errors}
@@ -87,8 +97,8 @@ export default function CreateGameScreen() {
       setValue={setValue}
       watch={watch}
       onSubmit={onSubmit}
-      submitLabel="Post game"
-      submittingLabel="Posting…"
+      submitLabel="Save changes"
+      submittingLabel="Saving…"
       isSubmitting={isSubmitting}
       apiError={apiError}
       courts={courts}

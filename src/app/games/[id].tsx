@@ -127,7 +127,20 @@ export default function GameDetailScreen() {
 
   return (
     <View className="flex-1 bg-dark">
-      <Stack.Screen options={{ title: game.title, headerBackTitle: 'Back' }} />
+      <Stack.Screen
+        options={{
+          title: game.title,
+          headerBackTitle: 'Back',
+          headerRight:
+            isHost && isActive
+              ? () => (
+                  <Pressable onPress={() => router.push(`/games/edit?id=${game.id}`)} hitSlop={12}>
+                    <Ionicons name="create-outline" size={22} color="#F0EDE8" />
+                  </Pressable>
+                )
+              : undefined,
+        }}
+      />
 
       {/* Hero */}
       <View style={{ height: HERO_HEIGHT }}>
