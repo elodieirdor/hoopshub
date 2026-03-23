@@ -59,9 +59,10 @@ const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  }
+  return Wrapper;
 };
 
 beforeEach(() => {
@@ -128,18 +129,25 @@ describe('useGames', () => {
 
   it('sets refreshing true during refresh', async () => {
     let resolve: (v: Game[]) => void;
-    mockedGetGames
-      .mockResolvedValueOnce([])
-      .mockImplementationOnce(() => new Promise((r) => { resolve = r; }));
+    mockedGetGames.mockResolvedValueOnce([]).mockImplementationOnce(
+      () =>
+        new Promise((r) => {
+          resolve = r;
+        }),
+    );
 
     const { result } = renderHook(() => useGames(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    act(() => { result.current.refresh(); });
+    act(() => {
+      result.current.refresh();
+    });
 
     await waitFor(() => expect(result.current.refreshing).toBe(true));
 
-    await act(async () => { resolve!([]); });
+    await act(async () => {
+      resolve!([]);
+    });
 
     await waitFor(() => expect(result.current.refreshing).toBe(false));
   });

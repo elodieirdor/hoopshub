@@ -51,7 +51,7 @@ export default function CreateGameScreen() {
         setValue('court_id', prefilled.id);
       }
     }
-  }, [courtIdParam, courts]);
+  }, [courtIdParam, courts, setValue]);
 
   const createMutation = useMutation({
     mutationFn: createGame,

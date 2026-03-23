@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import * as Burnt from 'burnt';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -42,8 +42,10 @@ export default function EditCourtScreen() {
     },
   });
 
+  const initialized = useRef(false);
   useEffect(() => {
-    if (!court) return;
+    if (!court || initialized.current) return;
+    initialized.current = true;
     reset({
       court_type: court.court_type,
       surface: court.surface,
@@ -51,7 +53,7 @@ export default function EditCourtScreen() {
       lit: court.lit,
       is_free: court.is_free,
     });
-  }, [court?.id]);
+  }, [court, reset]);
 
   const updateMutation = useMutation({
     mutationFn: (data: FormData) => updateCourt(Number(id), data),

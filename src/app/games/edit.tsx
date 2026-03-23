@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,8 +39,10 @@ export default function EditGameScreen() {
     resolver: zodResolver(gameFormSchema),
   });
 
+  const initialized = useRef(false);
   useEffect(() => {
-    if (!game || courts.length === 0) return;
+    if (!game || courts.length === 0 || initialized.current) return;
+    initialized.current = true;
     const court = courts.find((c) => c.id === game.court_id) ?? game.court ?? null;
     setSelectedCourt(court);
     reset({
@@ -53,7 +55,7 @@ export default function EditGameScreen() {
       skill_level: game.skill_level,
       game_type: game.game_type,
     });
-  }, [game?.id, courts.length]);
+  }, [game, courts, reset]);
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<typeof game>) => updateGame(Number(id), data!),
