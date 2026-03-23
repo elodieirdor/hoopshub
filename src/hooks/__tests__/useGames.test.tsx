@@ -1,4 +1,6 @@
+import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useGames } from '../useGames';
 import { getGames } from '@/api/games';
 import { Game, Court, User } from '@/types';
@@ -52,6 +54,16 @@ const mockGame: Game = {
   game_players: [],
 };
 
+// Fresh QueryClient per test — no cache bleed, retries disabled for speed
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -59,7 +71,7 @@ beforeEach(() => {
 describe('useGames', () => {
   it('starts in loading state', () => {
     mockedGetGames.mockResolvedValue([]);
-    const { result } = renderHook(() => useGames());
+    const { result } = renderHook(() => useGames(), { wrapper: createWrapper() });
     expect(result.current.loading).toBe(true);
     expect(result.current.games).toEqual([]);
   });
@@ -67,7 +79,7 @@ describe('useGames', () => {
   it('populates games on successful fetch', async () => {
     mockedGetGames.mockResolvedValue([mockGame]);
 
-    const { result } = renderHook(() => useGames());
+    const { result } = renderHook(() => useGames(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -78,7 +90,7 @@ describe('useGames', () => {
   it('sets error on failed fetch', async () => {
     mockedGetGames.mockRejectedValue(new Error('Network error'));
 
-    const { result } = renderHook(() => useGames());
+    const { result } = renderHook(() => useGames(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -89,7 +101,9 @@ describe('useGames', () => {
   it('passes params to getGames', async () => {
     mockedGetGames.mockResolvedValue([]);
 
-    renderHook(() => useGames({ city: 'Christchurch', status: 'open' }));
+    renderHook(() => useGames({ city: 'Christchurch', status: 'open' }), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(mockedGetGames).toHaveBeenCalledWith({ city: 'Christchurch', status: 'open' });
@@ -99,7 +113,7 @@ describe('useGames', () => {
   it('refresh reloads games and clears error', async () => {
     mockedGetGames.mockRejectedValueOnce(new Error('fail')).mockResolvedValueOnce([mockGame]);
 
-    const { result } = renderHook(() => useGames());
+    const { result } = renderHook(() => useGames(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.error).toBe('Failed to load games'));
 
@@ -107,33 +121,26 @@ describe('useGames', () => {
       await result.current.refresh();
     });
 
-    expect(result.current.games).toEqual([mockGame]);
+    await waitFor(() => expect(result.current.games).toEqual([mockGame]));
     expect(result.current.error).toBeNull();
     expect(result.current.refreshing).toBe(false);
   });
 
   it('sets refreshing true during refresh', async () => {
     let resolve: (v: Game[]) => void;
-    mockedGetGames.mockResolvedValueOnce([]).mockImplementationOnce(
-      () =>
-        new Promise((r) => {
-          resolve = r;
-        }),
-    );
+    mockedGetGames
+      .mockResolvedValueOnce([])
+      .mockImplementationOnce(() => new Promise((r) => { resolve = r; }));
 
-    const { result } = renderHook(() => useGames());
+    const { result } = renderHook(() => useGames(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    act(() => {
-      result.current.refresh();
-    });
+    act(() => { result.current.refresh(); });
 
-    expect(result.current.refreshing).toBe(true);
+    await waitFor(() => expect(result.current.refreshing).toBe(true));
 
-    await act(async () => {
-      resolve!([]);
-    });
+    await act(async () => { resolve!([]); });
 
-    expect(result.current.refreshing).toBe(false);
+    await waitFor(() => expect(result.current.refreshing).toBe(false));
   });
 });
