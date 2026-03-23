@@ -57,7 +57,6 @@ export default function GamesScreen() {
               id: -1,
               game_id: id,
               player_id: currentUser?.id ?? -1,
-              status: 'confirmed' as const,
               joined_at: new Date().toISOString(),
               player: currentUser!,
             },
