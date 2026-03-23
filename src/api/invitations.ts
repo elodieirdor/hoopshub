@@ -7,7 +7,7 @@ export const getMyInvitations = async (): Promise<GameInvitation[]> => {
 };
 
 export const sendInvitation = async (gameId: number, inviteeId: number) => {
-  const res = await client.post(`/games/${gameId}/invite`, { invitee_id: inviteeId });
+  const res = await client.post(`/games/${gameId}/invitations`, { invitee_id: inviteeId });
   return res.data;
 };
 

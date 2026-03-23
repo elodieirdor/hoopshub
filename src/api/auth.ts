@@ -8,17 +8,17 @@ export const register = async (data: {
   city?: string;
   skill_level?: string;
 }) => {
-  const res = await client.post<{ token: string; user: CurrentUser }>('/register', data);
+  const res = await client.post<{ token: string; user: CurrentUser }>('/users', data);
   return res.data;
 };
 
 export const login = async (data: { email: string; password: string }) => {
-  const res = await client.post<{ token: string; user: CurrentUser }>('/login', data);
+  const res = await client.post<{ token: string; user: CurrentUser }>('/tokens', data);
   return res.data;
 };
 
 export const logout = async () => {
-  await client.post('/logout');
+  await client.delete('/tokens');
 };
 
 export const me = async () => {

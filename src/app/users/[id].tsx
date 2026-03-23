@@ -4,10 +4,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getPublicProfile } from '@/api/profiles';
 import { Badge } from '@/components/ui/Badge';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SKILL_COLORS, initials, formatDate } from '@/utils/formatters';
+import { getUser } from '@/api/users';
 
 const AVATAR_PALETTE = ['#3B82F6', '#22C55E', '#F59E0B', '#8B5CF6', '#06B6D4', '#EF4444'];
 
@@ -49,7 +49,7 @@ export default function PublicProfileScreen() {
     refetch,
   } = useQuery({
     queryKey: ['user', id],
-    queryFn: () => getPublicProfile(Number(id)),
+    queryFn: () => getUser(Number(id)),
     enabled: !!id,
   });
 

@@ -2,6 +2,7 @@ import { useAuthStore } from './authStore';
 import * as authApi from '../api/auth';
 import { storage } from '../utils/storage';
 import { router } from 'expo-router';
+import { makeCurrentUser } from '../test/factories';
 
 jest.mock('../api/auth');
 jest.mock('../utils/storage');
@@ -11,18 +12,7 @@ const mockedAuthApi = jest.mocked(authApi);
 const mockedStorage = storage as jest.Mocked<typeof storage>;
 const mockedRouter = router as jest.Mocked<typeof router>;
 
-const mockUser = {
-  id: 1,
-  email: 'test@example.com',
-  name: 'Test User',
-  username: 'testuser',
-  city: 'Christchurch',
-  position: 'Guard' as const,
-  skill_level: 'intermediate' as const,
-  avatar_url: null,
-  games_played: 0,
-  avg_rating: 0,
-};
+const mockUser = makeCurrentUser({ email: 'test@example.com' });
 
 beforeEach(() => {
   jest.clearAllMocks();

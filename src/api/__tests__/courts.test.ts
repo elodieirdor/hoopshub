@@ -1,25 +1,12 @@
 import { getCourts, getCourt } from '../courts';
 import client from '../client';
-import { Court } from '@/types';
+import { makeCourt } from '@/test/factories';
 
 jest.mock('../client');
 
 const mockedClient = client as jest.Mocked<typeof client>;
 
-const mockCourt: Court = {
-  id: 1,
-  name: 'Cowles Stadium',
-  address: '751 Pages Road, Christchurch',
-  lat: -43.504,
-  lng: 172.675,
-  city: 'Christchurch',
-  court_type: 'indoor',
-  surface: 'hardwood',
-  full_court: true,
-  lit: true,
-  is_free: false,
-  images: [],
-};
+const mockCourt = makeCourt();
 
 describe('getCourts', () => {
   it('fetches courts without params', async () => {

@@ -1,64 +1,52 @@
-import { getProfile, updateProfile, getPublicProfile, searchInvitable } from '../profiles';
+import { getUser, updateMe, searchInvitable } from '../users';
 import client from '../client';
-import { User, PublicProfile } from '@/types';
+import { makeUser } from '@/test/factories';
 
 jest.mock('../client');
 
 const mockedClient = client as jest.Mocked<typeof client>;
 
-const mockUser: User = {
+const mockUser = makeUser({
   id: 5,
   name: 'Sam Hooper',
   username: 'samhooper',
-  city: 'Christchurch',
   position: 'Guard',
   skill_level: 'advanced',
-  avatar_url: null,
   games_played: 12,
   avg_rating: 4.5,
-};
-
-const mockPublicProfile: PublicProfile = {
-  ...mockUser,
   hosted_count: 3,
   member_since: 'Mar 2026',
-  ratings: {
-    punctuality: 4.2,
-    sportsmanship: 4.8,
-    skill_accuracy: 4.0,
-    fun_to_play: 5.0,
-  },
-  recent_games: [],
-};
+  ratings: { punctuality: 4.2, sportsmanship: 4.8, skill_accuracy: 4.0, fun_to_play: 5.0 },
+});
 
-describe('getProfile', () => {
+describe('getUser', () => {
   it('fetches a user by id', async () => {
     mockedClient.get = jest.fn().mockResolvedValue({ data: mockUser });
 
-    const result = await getProfile(5);
+    const result = await getUser(5);
 
     expect(mockedClient.get).toHaveBeenCalledWith('/users/5');
     expect(result).toEqual(mockUser);
   });
 });
 
-describe('updateProfile', () => {
-  it('sends a PUT request with partial data', async () => {
+describe('updateMe', () => {
+  it('sends a PUT request to /me with partial data', async () => {
     const updated = { ...mockUser, city: 'Auckland' };
     mockedClient.put = jest.fn().mockResolvedValue({ data: updated });
 
-    const result = await updateProfile(5, { city: 'Auckland' });
+    const result = await updateMe({ city: 'Auckland' });
 
-    expect(mockedClient.put).toHaveBeenCalledWith('/users/5', { city: 'Auckland' });
+    expect(mockedClient.put).toHaveBeenCalledWith('/me', { city: 'Auckland' });
     expect(result.city).toBe('Auckland');
   });
 });
 
-describe('getPublicProfile', () => {
+describe('getUser (public profile)', () => {
   it('fetches a public profile with ratings and recent_games', async () => {
-    mockedClient.get = jest.fn().mockResolvedValue({ data: mockPublicProfile });
+    mockedClient.get = jest.fn().mockResolvedValue({ data: mockUser });
 
-    const result = await getPublicProfile(5);
+    const result = await getUser(5);
 
     expect(mockedClient.get).toHaveBeenCalledWith('/users/5');
     expect(result.hosted_count).toBe(3);
