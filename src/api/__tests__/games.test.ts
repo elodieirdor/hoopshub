@@ -1,55 +1,18 @@
 import { getGames, joinGame, leaveGame, deleteGame } from '../games';
 import client from '../client';
-import { Game, Court, User } from '@/types';
+import { makeGame, makeCourt, makeUser } from '@/test/factories';
 
 jest.mock('../client');
 
 const mockedClient = client as jest.Mocked<typeof client>;
 
-const mockCourt: Court = {
-  id: 1,
-  name: 'Cowles Stadium',
-  address: '751 Pages Road, Christchurch',
-  lat: -43.504,
-  lng: 172.675,
-  city: 'Christchurch',
-  court_type: 'indoor',
-  surface: 'hardwood',
-  full_court: true,
-  lit: true,
-  is_free: false,
-  images: [],
-};
-
-const mockHost: User = {
-  id: 99,
-  username: 'ballerNZ',
-  name: 'Alex Baller',
-  city: 'Christchurch',
-  position: 'Guard',
-  skill_level: 'intermediate',
-  avatar_url: null,
-  games_played: 10,
-  avg_rating: 4.5,
-};
-
-const mockGame: Game = {
+const mockGame = makeGame({
   id: 42,
   host_id: 99,
-  court_id: 1,
-  title: 'Friday Pickup',
+  host: makeUser({ id: 99, username: 'ballerNZ', name: 'Alex Baller' }),
+  court: makeCourt({ id: 1 }),
   description: '5v5 at Cowles',
-  starts_at: '2026-04-01T18:00:00Z',
-  duration_mins: 90,
-  max_players: 10,
-  skill_level: 'intermediate',
-  game_type: '5v5',
-  status: 'open',
-  host: mockHost,
-  court: mockCourt,
-  game_players: [],
-  created_at: '2026-01-01T00:00:00Z',
-};
+});
 
 describe('getGames', () => {
   it('fetches games without params', async () => {
@@ -81,24 +44,23 @@ describe('getGames', () => {
 });
 
 describe('joinGame', () => {
-  it('posts to the join endpoint', async () => {
+  it('posts to the players endpoint', async () => {
     mockedClient.post = jest.fn().mockResolvedValue({ data: { success: true } });
 
     const result = await joinGame(42);
 
-    expect(mockedClient.post).toHaveBeenCalledWith('/games/42/join');
+    expect(mockedClient.post).toHaveBeenCalledWith('/games/42/players');
     expect(result).toEqual({ success: true });
   });
 });
 
 describe('leaveGame', () => {
-  it('posts to the leave endpoint', async () => {
-    mockedClient.post = jest.fn().mockResolvedValue({ data: { success: true } });
+  it('sends a DELETE to the players endpoint', async () => {
+    mockedClient.delete = jest.fn().mockResolvedValue({});
 
-    const result = await leaveGame(42);
+    await leaveGame(42);
 
-    expect(mockedClient.post).toHaveBeenCalledWith('/games/42/leave');
-    expect(result).toEqual({ success: true });
+    expect(mockedClient.delete).toHaveBeenCalledWith('/games/42/players');
   });
 });
 

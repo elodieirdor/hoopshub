@@ -1,25 +1,18 @@
 import { useAuthStore } from './authStore';
+import * as authApi from '../api/auth';
+import { storage } from '../utils/storage';
+import { router } from 'expo-router';
+import { makeCurrentUser } from '../test/factories';
 
 jest.mock('../api/auth');
 jest.mock('../utils/storage');
 jest.mock('expo-router', () => ({ router: { replace: jest.fn() } }));
 
-const authApi = jest.mocked(require('../api/auth'));
-const { storage } = require('../utils/storage') as { storage: Record<string, jest.Mock> };
-const { router } = require('expo-router');
+const mockedAuthApi = jest.mocked(authApi);
+const mockedStorage = storage as jest.Mocked<typeof storage>;
+const mockedRouter = router as jest.Mocked<typeof router>;
 
-const mockUser = {
-  id: 1,
-  email: 'test@example.com',
-  name: 'Test User',
-  username: 'testuser',
-  city: 'Christchurch',
-  position: 'Guard' as const,
-  skill_level: 'intermediate' as const,
-  avatar_url: null,
-  games_played: 0,
-  avg_rating: 0,
-};
+const mockUser = makeCurrentUser({ email: 'test@example.com' });
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -28,7 +21,7 @@ beforeEach(() => {
 
 describe('loadUser', () => {
   it('sets isLoading false when no token in storage', async () => {
-    storage.get.mockResolvedValue(null);
+    mockedStorage.get.mockResolvedValue(null);
 
     await useAuthStore.getState().loadUser();
     const state = useAuthStore.getState();
@@ -39,8 +32,8 @@ describe('loadUser', () => {
   });
 
   it('authenticates when token and /me succeed', async () => {
-    storage.get.mockResolvedValue('tok_abc');
-    authApi.me.mockResolvedValue(mockUser);
+    mockedStorage.get.mockResolvedValue('tok_abc');
+    mockedAuthApi.me.mockResolvedValue(mockUser);
 
     await useAuthStore.getState().loadUser();
     const state = useAuthStore.getState();
@@ -52,13 +45,13 @@ describe('loadUser', () => {
   });
 
   it('clears the token and sets isLoading false when /me throws', async () => {
-    storage.get.mockResolvedValue('tok_bad');
-    authApi.me.mockRejectedValue(new Error('Unauthorized'));
+    mockedStorage.get.mockResolvedValue('tok_bad');
+    mockedAuthApi.me.mockRejectedValue(new Error('Unauthorized'));
 
     await useAuthStore.getState().loadUser();
     const state = useAuthStore.getState();
 
-    expect(storage.delete).toHaveBeenCalledWith('auth_token');
+    expect(mockedStorage.delete).toHaveBeenCalledWith('auth_token');
     expect(state.isAuthenticated).toBe(false);
     expect(state.isLoading).toBe(false);
   });
@@ -66,19 +59,19 @@ describe('loadUser', () => {
 
 describe('login', () => {
   it('sets user, token and isAuthenticated on success', async () => {
-    authApi.login.mockResolvedValue({ token: 'tok_123', user: mockUser });
+    mockedAuthApi.login.mockResolvedValue({ token: 'tok_123', user: mockUser });
 
     await useAuthStore.getState().login('test@example.com', 'password');
     const state = useAuthStore.getState();
 
-    expect(storage.set).toHaveBeenCalledWith('auth_token', 'tok_123');
+    expect(mockedStorage.set).toHaveBeenCalledWith('auth_token', 'tok_123');
     expect(state.token).toBe('tok_123');
     expect(state.user).toEqual(mockUser);
     expect(state.isAuthenticated).toBe(true);
   });
 
   it('propagates errors without changing state', async () => {
-    authApi.login.mockRejectedValue(new Error('Invalid credentials'));
+    mockedAuthApi.login.mockRejectedValue(new Error('Invalid credentials'));
 
     await expect(useAuthStore.getState().login('bad@example.com', 'wrong')).rejects.toThrow(
       'Invalid credentials',
@@ -93,15 +86,15 @@ describe('login', () => {
 describe('logout', () => {
   it('clears state, deletes token and redirects to login', async () => {
     useAuthStore.setState({ user: mockUser as any, token: 'tok_123', isAuthenticated: true });
-    authApi.logout.mockResolvedValue(undefined);
+    mockedAuthApi.logout.mockResolvedValue(undefined);
 
     await useAuthStore.getState().logout();
     const state = useAuthStore.getState();
 
-    expect(storage.delete).toHaveBeenCalledWith('auth_token');
+    expect(mockedStorage.delete).toHaveBeenCalledWith('auth_token');
     expect(state.user).toBeNull();
     expect(state.token).toBeNull();
     expect(state.isAuthenticated).toBe(false);
-    expect(router.replace).toHaveBeenCalledWith('/(auth)/login');
+    expect(mockedRouter.replace).toHaveBeenCalledWith('/(auth)/login');
   });
 });

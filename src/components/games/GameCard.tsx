@@ -51,17 +51,26 @@ export function GameCard({
       {/* Host row */}
       <View className="flex-row items-center justify-between mb-2">
         <View className="flex-row items-center gap-2 flex-1">
-          <View
-            className="rounded-full items-center justify-center"
-            style={{ width: 32, height: 32, backgroundColor: '#FF5C00' }}
+          <Pressable
+            className="flex-row items-center gap-2"
+            onPress={() => router.push(`/users/${game.host_id}`)}
           >
-            <Text className="text-cream font-sans font-semibold text-xs">
-              {initials(game.host?.name ?? '?')}
+            <View
+              className="rounded-full items-center justify-center"
+              style={{ width: 32, height: 32, backgroundColor: '#FF5C00' }}
+            >
+              <Text className="text-cream font-sans font-semibold text-xs">
+                {initials(game.host?.name ?? '?')}
+              </Text>
+            </View>
+            <Text className="text-muted font-sans text-xs">{game.host?.name ?? 'Unknown'}</Text>
+          </Pressable>
+          {game.court?.name ? (
+            <Text className="text-muted font-sans text-xs flex-1" numberOfLines={1}>
+              {' · '}
+              {game.court.name}
             </Text>
-          </View>
-          <Text className="text-muted font-sans text-xs flex-1" numberOfLines={1}>
-            {game.host?.name ?? 'Unknown'} · {game.court?.name ?? ''}
-          </Text>
+          ) : null}
         </View>
         {/* Status badge */}
         <View className="rounded-md px-2 py-[3px]" style={{ backgroundColor: color + '22' }}>

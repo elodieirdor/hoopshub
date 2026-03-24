@@ -1,5 +1,5 @@
 import { isToday, isThisWeekend, applyFilters, FilterKey } from '../gameFilters';
-import { Game, Court, User } from '@/types';
+import { makeGame } from '@/test/factories';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -8,54 +8,6 @@ function isoOffset(days: number, hours = 12): string {
   d.setDate(d.getDate() + days);
   d.setHours(hours, 0, 0, 0);
   return d.toISOString();
-}
-
-const mockUser: User = {
-  id: 1,
-  name: 'Alex',
-  username: 'alex',
-  city: 'Christchurch',
-  position: null,
-  skill_level: 'intermediate',
-  avatar_url: null,
-  games_played: 0,
-  avg_rating: 0,
-};
-
-const mockCourt: Court = {
-  id: 1,
-  name: 'Cowles',
-  address: '751 Pages Rd',
-  city: 'Christchurch',
-  lat: -43.504,
-  lng: 172.675,
-  court_type: 'indoor',
-  surface: 'hardwood',
-  full_court: true,
-  lit: true,
-  is_free: false,
-  images: [],
-};
-
-function makeGame(overrides: Partial<Game> = {}): Game {
-  return {
-    id: 1,
-    host_id: 1,
-    court_id: 1,
-    title: 'Pickup',
-    description: null,
-    starts_at: isoOffset(1),
-    duration_mins: 60,
-    max_players: 10,
-    skill_level: 'intermediate',
-    game_type: '5v5',
-    status: 'open',
-    created_at: new Date().toISOString(),
-    host: mockUser,
-    court: mockCourt,
-    game_players: [],
-    ...overrides,
-  };
 }
 
 // ── isToday ───────────────────────────────────────────────────────────────────
@@ -155,7 +107,7 @@ describe('applyFilters', () => {
     // game 1 is today + intermediate
     expect(none).toHaveLength(1);
 
-    // filter for today + 5v5 — game 1 is today but 3v3
+    // filter for today + 3v3 — game 1 is today + 3v3
     const empty = applyFilters(games, new Set<FilterKey>(['today', '3v3']));
     expect(empty.every((g) => g.game_type === '3v3')).toBe(true);
   });

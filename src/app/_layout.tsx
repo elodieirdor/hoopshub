@@ -3,6 +3,7 @@ import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '../global.css';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -19,6 +20,8 @@ import { useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient();
 
 export const unstable_settings = {
   anchor: '(auth)',
@@ -38,7 +41,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     loadUser();
-  }, []);
+  }, [loadUser]);
 
   useEffect(() => {
     if (!fontsLoaded || isLoading) return;
@@ -53,27 +56,30 @@ export default function RootLayout() {
   if (!fontsLoaded || isLoading) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack
-          screenOptions={{
-            title: 'Loading...',
-          }}
-        >
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="courts/[id]" options={{ headerBackTitle: 'Courts' }} />
-          <Stack.Screen
-            name="courts/edit"
-            options={{ title: 'Edit court', headerBackTitle: 'Back' }}
-          />
-          <Stack.Screen name="games/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="games/create" options={{ headerShown: false }} />
-          <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </GestureHandlerRootView>
+    <QueryClientProvider client={queryClient}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack
+            screenOptions={{
+              title: 'Loading...',
+            }}
+          >
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="courts/[id]" options={{ headerBackTitle: 'Courts' }} />
+            <Stack.Screen
+              name="courts/edit"
+              options={{ title: 'Edit court', headerBackTitle: 'Back' }}
+            />
+            <Stack.Screen name="games/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="games/create" options={{ headerShown: false }} />
+            <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
+            <Stack.Screen name="users/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </GestureHandlerRootView>
+    </QueryClientProvider>
   );
 }

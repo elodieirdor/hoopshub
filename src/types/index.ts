@@ -8,6 +8,15 @@ export interface User {
   avatar_url: string | null;
   games_played: number;
   avg_rating: number;
+  hosted_count: number;
+  member_since: string;
+  ratings: {
+    punctuality: number;
+    sportsmanship: number;
+    skill_accuracy: number;
+    fun_to_play: number;
+  };
+  recent_games: Game[];
 }
 
 export type CurrentUser = User & {
@@ -65,6 +74,18 @@ export interface Rating {
   sportsmanship: number;
   skill_accuracy: number;
   fun_to_play: number;
+}
+
+export interface GameInvitation {
+  id: number;
+  game_id: number;
+  inviter_id: number;
+  invitee_id: number;
+  status: 'pending' | 'accepted' | 'declined';
+  responded_at: string | null;
+  created_at: string;
+  game: Game;
+  inviter: User;
 }
 
 export interface ApiError {

@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, Pressable, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { joinGame, leaveGame } from '@/api/games';
 import { Game } from '@/types';
 import { GameCard } from '@/components/games/GameCard';
 import { GameCardSkeleton } from '@/components/games/GameCardSkeleton';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useGames } from '@/hooks/useGames';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type FilterKey, applyFilters } from '@/utils/gameFilters';
@@ -19,19 +21,17 @@ const CHIPS: { key: FilterKey; label: string }[] = [
   { key: 'nearme', label: 'Near me' },
 ];
 
+const GAMES_PARAMS = { city: 'Christchurch', status: 'open' };
+
 export default function GamesScreen() {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const currentUser = useAuthStore((s) => s.user);
-  const { games, setGames, loading, refreshing, error, refresh } = useGames({
-    city: 'Christchurch',
-    status: 'open',
-  });
+  const queryClient = useQueryClient();
+  const { games, loading, refreshing, error, refresh } = useGames(GAMES_PARAMS);
+  const GAMES_KEY = ['games', GAMES_PARAMS];
 
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
-  const [joiningId, setJoiningId] = useState<number | null>(null);
-  const [leavingId, setLeavingId] = useState<number | null>(null);
-
   const filtered = useMemo(() => applyFilters(games, activeFilters), [games, activeFilters]);
 
   const toggleFilter = (key: FilterKey) => {
@@ -43,67 +43,61 @@ export default function GamesScreen() {
     });
   };
 
-  const handleJoin = async (id: number) => {
-    setJoiningId(id);
-    setGames((prev) =>
-      prev.map((g) => {
-        if (g.id !== id) return g;
-        const newFilled = (g.game_players?.length ?? 0) + 1;
-        return {
-          ...g,
-          game_players: [
-            ...(g.game_players ?? []),
-            {
-              id: -1,
-              game_id: id,
-              player_id: currentUser?.id ?? -1,
-              joined_at: new Date().toISOString(),
-              player: currentUser!,
-            },
-          ],
-          status: newFilled >= g.max_players ? ('full' as const) : g.status,
-        };
-      }),
-    );
-    try {
-      await joinGame(id);
-    } catch {
-      setGames((prev) =>
-        prev.map((g) => {
+  const joinMutation = useMutation({
+    mutationFn: (id: number) => joinGame(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: GAMES_KEY });
+      const prev = queryClient.getQueryData<Game[]>(GAMES_KEY);
+      queryClient.setQueryData<Game[]>(GAMES_KEY, (old = []) =>
+        old.map((g) => {
+          if (g.id !== id) return g;
+          const newFilled = (g.game_players?.length ?? 0) + 1;
+          return {
+            ...g,
+            game_players: [
+              ...(g.game_players ?? []),
+              {
+                id: -1,
+                game_id: id,
+                player_id: currentUser?.id ?? -1,
+                joined_at: new Date().toISOString(),
+                player: currentUser!,
+              },
+            ],
+            status: newFilled >= g.max_players ? ('full' as const) : g.status,
+          };
+        }),
+      );
+      return { prev };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(GAMES_KEY, ctx.prev);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
+  });
+
+  const leaveMutation = useMutation({
+    mutationFn: (id: number) => leaveGame(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: GAMES_KEY });
+      const prev = queryClient.getQueryData<Game[]>(GAMES_KEY);
+      queryClient.setQueryData<Game[]>(GAMES_KEY, (old = []) =>
+        old.map((g) => {
           if (g.id !== id) return g;
           return {
             ...g,
-            game_players: (g.game_players ?? []).filter((p) => p.id !== -1),
+            game_players: (g.game_players ?? []).filter((p) => p.player.id !== currentUser?.id),
             status: 'open' as const,
           };
         }),
       );
-    } finally {
-      setJoiningId(null);
-    }
-  };
-
-  const handleLeave = async (id: number) => {
-    setLeavingId(id);
-    const snapshot = games.find((g) => g.id === id);
-    setGames((prev) =>
-      prev.map((g) => {
-        if (g.id !== id) return g;
-        return {
-          ...g,
-          game_players: (g.game_players ?? []).filter((p) => p.player.id !== currentUser?.id),
-          status: 'open' as const,
-        };
-      }),
-    );
-    try {
-      await leaveGame(id);
-    } catch {
-      if (snapshot) setGames((prev) => prev.map((g) => (g.id === id ? snapshot : g)));
-    } finally {
-      setLeavingId(null);
-    }
-  };
+      return { prev };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(GAMES_KEY, ctx.prev);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
+  });
 
   return (
     <View className="flex-1 bg-dark" style={{ paddingTop: top, paddingBottom: bottom }}>
@@ -134,9 +128,7 @@ export default function GamesScreen() {
           ))}
         </View>
       ) : error ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-muted font-sans text-center">{error}</Text>
-        </View>
+        <ErrorState message={error} onRetry={refresh} />
       ) : (
         <FlatList
           data={filtered}
@@ -145,10 +137,10 @@ export default function GamesScreen() {
           renderItem={({ item }) => (
             <GameCard
               game={item}
-              onJoin={handleJoin}
-              onLeave={handleLeave}
-              joining={joiningId === item.id}
-              leaving={leavingId === item.id}
+              onJoin={(id) => joinMutation.mutate(id)}
+              onLeave={(id) => leaveMutation.mutate(id)}
+              joining={joinMutation.isPending && joinMutation.variables === item.id}
+              leaving={leaveMutation.isPending && leaveMutation.variables === item.id}
             />
           )}
           ListEmptyComponent={

@@ -31,13 +31,12 @@ export const createGame = async (data: {
 };
 
 export const joinGame = async (id: number) => {
-  const res = await client.post(`/games/${id}/join`);
+  const res = await client.post(`/games/${id}/players`);
   return res.data;
 };
 
 export const leaveGame = async (id: number) => {
-  const res = await client.post(`/games/${id}/leave`);
-  return res.data;
+  await client.delete(`/games/${id}/players`);
 };
 
 export const updateGame = async (id: number, data: Partial<Game>) => {

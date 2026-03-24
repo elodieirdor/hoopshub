@@ -15,6 +15,7 @@ import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { CourtPin } from '@/components/courts/CourtPin';
 import { CourtCard } from '@/components/courts/CourtCard';
@@ -54,9 +55,17 @@ export default function CourtsScreen() {
   const listRef = useRef<FlatList>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [courts, setCourts] = useState<Court[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const city = user?.city ?? 'Christchurch';
+  const {
+    data: courts = [],
+    isLoading: loading,
+    isRefetching: refreshing,
+    refetch,
+  } = useQuery({
+    queryKey: ['courts', { city }],
+    queryFn: () => getCourts({ city }),
+  });
+
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [selectedCourtId, setSelectedCourtId] = useState<number | null>(null);
@@ -112,17 +121,7 @@ export default function CourtsScreen() {
     }),
   ).current;
 
-  // ── Data ──────────────────────────────────────────────────────────────────
-  const fetchCourts = async () => {
-    try {
-      const city = user?.city ?? 'Christchurch';
-      const data = await getCourts({ city });
-      setCourts(data);
-    } catch {
-      // silently fail
-    }
-  };
-
+  // ── Location ──────────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -130,16 +129,10 @@ export default function CourtsScreen() {
         const pos = await Location.getCurrentPositionAsync({});
         setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       }
-      await fetchCourts();
-      setLoading(false);
     })();
   }, []);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchCourts();
-    setRefreshing(false);
-  };
+  const onRefresh = () => refetch();
 
   // ── Filtered + sorted list ────────────────────────────────────────────────
   const filtered = useMemo(() => {

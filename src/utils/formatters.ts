@@ -1,3 +1,13 @@
+import { Game } from '@/types';
+
+export const SKILL_COLORS: Record<Game['skill_level'], string> = {
+  beginner: '#3B82F6',
+  intermediate: '#FF5C00',
+  advanced: '#F59E0B',
+  comp: '#EF4444',
+  any: '#22C55E',
+};
+
 export function initials(name: string): string {
   return name
     .split(' ')
