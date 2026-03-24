@@ -1,17 +1,32 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-export function Stars({ rating }: { rating: number }) {
+interface Props {
+  rating: number;
+  showValue?: boolean;
+}
+
+export function Stars({ rating, showValue = false }: Props) {
   return (
-    <View className="flex-row gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Text
-          key={i}
-          style={{ color: i < Math.round(rating) ? '#FF5C00' : '#7A7870', fontSize: 14 }}
-        >
-          {i < Math.round(rating) ? '★' : '☆'}
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+      {Array.from({ length: 5 }, (_, i) => {
+        const filled = rating >= i + 1;
+        const half = !filled && rating >= i + 0.5;
+        return (
+          <Ionicons
+            key={i}
+            name={filled ? 'star' : half ? 'star-half' : 'star-outline'}
+            size={14}
+            color={filled || half ? '#FF5C00' : '#444441'}
+          />
+        );
+      })}
+      {showValue && (
+        <Text className="text-muted font-sans text-xs" style={{ marginLeft: 4 }}>
+          {rating.toFixed(1)}
         </Text>
-      ))}
+      )}
     </View>
   );
 }

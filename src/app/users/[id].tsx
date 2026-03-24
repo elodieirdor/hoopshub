@@ -4,37 +4,18 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Badge } from '@/components/ui/Badge';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { SKILL_COLORS, initials, formatDate } from '@/utils/formatters';
+import { ProfileIdentity } from '@/components/profile/ProfileIdentity';
+import { ProfileStats } from '@/components/profile/ProfileStats';
+import { ProfileRepSection } from '@/components/profile/ProfileRepSection';
+import { SKILL_COLORS, formatDate } from '@/utils/formatters';
+import { Badge } from '@/components/ui/Badge';
 import { getUser } from '@/api/users';
 
 const AVATAR_PALETTE = ['#3B82F6', '#22C55E', '#F59E0B', '#8B5CF6', '#06B6D4', '#EF4444'];
 
 function avatarBgColor(name: string): string {
   return AVATAR_PALETTE[name.charCodeAt(0) % AVATAR_PALETTE.length];
-}
-
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-      {Array.from({ length: 5 }, (_, i) => {
-        const filled = rating >= i + 1;
-        const half = !filled && rating >= i + 0.5;
-        return (
-          <Ionicons
-            key={i}
-            name={filled ? 'star' : half ? 'star-half' : 'star-outline'}
-            size={14}
-            color={filled || half ? '#FF5C00' : '#444441'}
-          />
-        );
-      })}
-      <Text className="text-muted font-sans text-xs" style={{ marginLeft: 4 }}>
-        {rating.toFixed(1)}
-      </Text>
-    </View>
-  );
 }
 
 export default function PublicProfileScreen() {
@@ -77,7 +58,6 @@ export default function PublicProfileScreen() {
     );
   }
 
-  const skillColor = SKILL_COLORS[profile.skill_level] ?? '#7A7870';
   const avgRating = Number(profile.avg_rating ?? 0);
 
   return (
@@ -93,108 +73,40 @@ export default function PublicProfileScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* Hero */}
-        <View className="items-center px-4 pt-4 pb-6">
-          <View
-            className="rounded-full items-center justify-center mb-4"
-            style={{
-              width: 80,
-              height: 80,
-              backgroundColor: avatarBgColor(profile.name),
-              borderWidth: 2,
-              borderColor: '#FF5C00',
-            }}
-          >
-            <Text style={{ color: '#fff', fontFamily: 'DMSans_600SemiBold', fontSize: 28 }}>
-              {initials(profile.name)}
-            </Text>
-          </View>
-
-          <Text className="font-display text-cream mb-1" style={{ fontSize: 28 }}>
-            {profile.name.toUpperCase()}
-          </Text>
-
-          <Text className="text-muted font-sans mb-3" style={{ fontSize: 13 }}>
-            @{profile.username}
-            {profile.city ? ` · ${profile.city}` : ''}
-          </Text>
-
-          <View className="flex-row gap-2 mb-2">
-            <Badge
-              label={profile.skill_level.charAt(0).toUpperCase() + profile.skill_level.slice(1)}
-              color={skillColor}
-            />
-            {profile.position && profile.position !== 'Any' && (
-              <Badge label={profile.position} color="#7A7870" />
-            )}
-          </View>
-
-          {profile.member_since && (
-            <Text className="text-muted font-sans" style={{ fontSize: 12 }}>
-              Member since {profile.member_since}
-            </Text>
-          )}
-        </View>
+        <ProfileIdentity
+          user={profile}
+          avatarBgColor={avatarBgColor(profile.name)}
+          avatarSize={80}
+          avatarBorder
+        />
 
         <View className="px-4">
-          {/* Stats row */}
+          {/* Stats */}
           <View
-            className="rounded-xl mb-3 flex-row"
+            className="rounded-xl mb-3"
             style={{
               backgroundColor: '#181818',
               borderWidth: 1,
               borderColor: 'rgba(255,255,255,0.08)',
             }}
           >
-            <View className="flex-1 items-center py-4">
-              <Text className="font-display text-3xl text-cream">{profile.games_played ?? 0}</Text>
-              <Text className="text-muted font-sans text-xs mt-0.5">Games played</Text>
-            </View>
-            <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-            <View className="flex-1 items-center py-4">
-              <Text className="font-display text-3xl" style={{ color: '#FF5C00' }}>
-                {avgRating > 0 ? avgRating.toFixed(1) : '—'}
-              </Text>
-              <Text className="text-muted font-sans text-xs mt-0.5">Avg rating</Text>
-            </View>
-            <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-            <View className="flex-1 items-center py-4">
-              <Text className="font-display text-3xl text-cream">{profile.hosted_count ?? 0}</Text>
-              <Text className="text-muted font-sans text-xs mt-0.5">Hosted</Text>
-            </View>
+            <ProfileStats
+              stats={[
+                { value: profile.games_played ?? 0, label: 'Games played' },
+                {
+                  value: avgRating > 0 ? avgRating.toFixed(1) : '—',
+                  label: 'Avg rating',
+                  highlight: true,
+                },
+                { value: profile.hosted_count ?? 0, label: 'Hosted' },
+              ]}
+            />
           </View>
 
           {/* Community rep */}
           {profile.ratings && (
-            <View
-              className="rounded-xl mb-3"
-              style={{
-                backgroundColor: '#181818',
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.08)',
-              }}
-            >
-              <Text className="font-display text-cream px-4 pt-4 pb-3" style={{ fontSize: 18 }}>
-                COMMUNITY REP
-              </Text>
-              {[
-                { label: 'Shows up on time', value: profile.ratings.punctuality },
-                { label: 'Good sportsmanship', value: profile.ratings.sportsmanship },
-                { label: 'Right skill level', value: profile.ratings.skill_accuracy },
-                { label: 'Fun to play with', value: profile.ratings.fun_to_play },
-              ].map((row) => (
-                <View key={row.label}>
-                  <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-                  <View className="flex-row items-center justify-between px-4 py-3">
-                    <Text className="text-cream font-sans text-sm flex-1">{row.label}</Text>
-                    {row.value > 0 ? (
-                      <StarRating rating={row.value} />
-                    ) : (
-                      <Text className="text-muted font-sans text-xs">No ratings yet</Text>
-                    )}
-                  </View>
-                </View>
-              ))}
+            <View className="mb-3">
+              <ProfileRepSection ratings={profile.ratings} showValue />
             </View>
           )}
 
@@ -207,9 +119,7 @@ export default function PublicProfileScreen() {
               borderColor: 'rgba(255,255,255,0.08)',
             }}
           >
-            <Text className="font-display text-cream px-4 pt-4 pb-3" style={{ fontSize: 18 }}>
-              RECENT GAMES
-            </Text>
+            <Text className="font-display text-xl text-cream px-4 pt-4 pb-3">RECENT GAMES</Text>
             {!profile.recent_games?.length ? (
               <View className="px-4 pb-4">
                 <Text className="text-muted font-sans text-sm">No games played yet</Text>

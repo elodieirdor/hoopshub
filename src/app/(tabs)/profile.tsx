@@ -14,11 +14,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { getGames } from '@/api/games';
-import { Badge } from '@/components/ui/Badge';
 import { GameCard } from '@/components/games/GameCard';
 import { GameCardSkeleton } from '@/components/games/GameCardSkeleton';
-import { initials, SKILL_COLORS } from '@/utils/formatters';
-import { Stars } from '@/components/ui/Stars';
+import { ProfileIdentity } from '@/components/profile/ProfileIdentity';
+import { ProfileStats } from '@/components/profile/ProfileStats';
+import { ProfileRepSection } from '@/components/profile/ProfileRepSection';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -43,10 +43,6 @@ export default function ProfileScreen() {
     enabled: !!user,
   });
 
-  const onRefresh = () => {
-    refetch();
-  };
-
   const handleLogout = () => {
     Alert.alert('Log out', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
@@ -62,8 +58,13 @@ export default function ProfileScreen() {
     );
   }
 
-  const skillColor = SKILL_COLORS[user.skill_level] ?? '#7A7870';
   const avgRating = Number(user.avg_rating ?? 0);
+  const repRatings = user.ratings ?? {
+    punctuality: avgRating,
+    sportsmanship: avgRating,
+    skill_accuracy: avgRating,
+    fun_to_play: avgRating,
+  };
 
   return (
     <ScrollView
@@ -71,7 +72,7 @@ export default function ProfileScreen() {
       style={{ paddingTop: top }}
       contentContainerStyle={{ paddingBottom: bottom + 32 }}
       refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} tintColor="#FF5C00" />
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />
       }
     >
       {/* Header */}
@@ -82,97 +83,32 @@ export default function ProfileScreen() {
         </Pressable>
       </View>
 
-      {/* Identity */}
-      <View className="items-center px-4 pt-6 pb-6">
-        {/* Avatar */}
-        <View
-          className="rounded-full items-center justify-center mb-4"
-          style={{ width: 72, height: 72, backgroundColor: '#FF5C00' }}
-        >
-          <Text className="text-cream font-sans font-bold text-2xl">{initials(user.name)}</Text>
-        </View>
-
-        {/* Name */}
-        <Text className="font-display text-3xl text-cream mb-1">{user.name.toUpperCase()}</Text>
-
-        {/* Username + city */}
-        <Text className="text-muted font-sans text-sm mb-4">
-          @{user.username}
-          {user.city ? ` · ${user.city}` : ''}
-        </Text>
-
-        {/* Badges */}
-        <View className="flex-row gap-2">
-          <Badge
-            label={user.skill_level.charAt(0).toUpperCase() + user.skill_level.slice(1)}
-            color={skillColor}
-          />
-          {user.position && user.position !== 'Any' && (
-            <Badge label={user.position} color="#7A7870" />
-          )}
-        </View>
-      </View>
+      <ProfileIdentity user={user} />
 
       {/* Divider */}
       <View
         style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: 16 }}
       />
 
-      {/* Stats row */}
-      <View className="flex-row px-4 py-5">
-        <View className="flex-1 items-center">
-          <Text className="font-display text-3xl text-cream">{user.games_played ?? 0}</Text>
-          <Text className="text-muted font-sans text-xs mt-0.5">Games played</Text>
-        </View>
-        <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-        <View className="flex-1 items-center">
-          <Text className="font-display text-3xl" style={{ color: '#FF5C00' }}>
-            {avgRating > 0 ? avgRating.toFixed(1) : '—'}
-          </Text>
-          <Text className="text-muted font-sans text-xs mt-0.5">Avg rating</Text>
-        </View>
-        <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-        <View className="flex-1 items-center">
-          <Text className="font-display text-3xl text-cream">—</Text>
-          <Text className="text-muted font-sans text-xs mt-0.5">Courts visited</Text>
-        </View>
-      </View>
+      <ProfileStats
+        stats={[
+          { value: user.games_played ?? 0, label: 'Games played' },
+          {
+            value: avgRating > 0 ? avgRating.toFixed(1) : '—',
+            label: 'Avg rating',
+            highlight: true,
+          },
+          { value: '—', label: 'Courts visited' },
+        ]}
+      />
 
       {/* Divider */}
       <View
         style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: 16 }}
       />
 
-      {/* Community rep */}
       <View className="px-4 pt-5 pb-4">
-        <Text className="font-display text-2xl text-cream mb-4">COMMUNITY REP</Text>
-        <View
-          className="rounded-xl"
-          style={{
-            backgroundColor: '#181818',
-            borderWidth: 1,
-            borderColor: 'rgba(255,255,255,0.08)',
-          }}
-        >
-          {[
-            { label: 'Shows up on time', rating: avgRating },
-            { label: 'Good sportsmanship', rating: avgRating },
-            { label: 'Right skill level', rating: avgRating },
-            { label: 'Fun to play with', rating: avgRating },
-          ].map((row, i) => (
-            <View key={row.label}>
-              {i > 0 && <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />}
-              <View className="flex-row items-center justify-between px-4 py-3">
-                <Text className="text-cream font-sans text-sm flex-1">{row.label}</Text>
-                {row.rating > 0 ? (
-                  <Stars rating={row.rating} />
-                ) : (
-                  <Text className="text-muted font-sans text-xs">No ratings yet</Text>
-                )}
-              </View>
-            </View>
-          ))}
-        </View>
+        <ProfileRepSection ratings={repRatings} />
       </View>
 
       {/* Recent games */}
