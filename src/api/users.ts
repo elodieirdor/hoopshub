@@ -11,6 +11,31 @@ export const updateMe = async (data: Partial<User>) => {
   return res.data;
 };
 
+export const updateEmail = async (data: { email: string; current_password: string }) => {
+  const res = await client.put<User>('/me/email', data);
+  return res.data;
+};
+
+export const updatePassword = async (data: {
+  current_password: string;
+  password: string;
+  password_confirmation: string;
+}) => {
+  await client.put('/me/password', data);
+};
+
+export const uploadAvatar = async (uri: string): Promise<User> => {
+  const filename = uri.split('/').pop() ?? 'avatar.jpg';
+  const ext = (filename.split('.').pop() ?? 'jpg').toLowerCase();
+  const type = ext === 'png' ? 'image/png' : 'image/jpeg';
+  const formData = new FormData();
+  formData.append('avatar', { uri, name: filename, type } as unknown as Blob);
+  const res = await client.post<User>('/me/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data;
+};
+
 export const searchInvitable = async (gameId: number, query: string): Promise<User[]> => {
   const res = await client.get<User[]>(`/games/${gameId}/invitable`, { params: { q: query } });
   return res.data;

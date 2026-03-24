@@ -1,21 +1,12 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  RefreshControl,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { getGames } from '@/api/games';
-import { GameCard } from '@/components/games/GameCard';
-import { GameCardSkeleton } from '@/components/games/GameCardSkeleton';
+import { GameHistoryRow } from '@/components/games/GameHistoryRow';
 import { ProfileIdentity } from '@/components/profile/ProfileIdentity';
 import { ProfileStats } from '@/components/profile/ProfileStats';
 import { ProfileRepSection } from '@/components/profile/ProfileRepSection';
@@ -24,7 +15,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const {
     data: recentGames = [],
@@ -43,13 +34,6 @@ export default function ProfileScreen() {
     enabled: !!user,
   });
 
-  const handleLogout = () => {
-    Alert.alert('Log out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log out', style: 'destructive', onPress: () => logout() },
-    ]);
-  };
-
   if (!user) {
     return (
       <View className="flex-1 bg-dark items-center justify-center">
@@ -66,87 +50,117 @@ export default function ProfileScreen() {
     fun_to_play: avgRating,
   };
 
+  const closeMenu = () => setMenuOpen(false);
+
   return (
-    <ScrollView
-      className="flex-1 bg-dark"
-      style={{ paddingTop: top }}
-      contentContainerStyle={{ paddingBottom: bottom + 32 }}
-      refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />
-      }
-    >
-      {/* Header */}
+    <View className="flex-1 bg-dark" style={{ paddingTop: top }}>
+      {/* Fixed header */}
       <View className="flex-row items-center justify-between px-4 pt-4 pb-2">
         <Text className="font-display text-4xl text-cream">PROFILE</Text>
-        <Pressable onPress={() => router.push('/profile/edit')} hitSlop={12}>
-          <Text className="text-orange font-sans text-sm font-semibold">Edit</Text>
+        <Pressable onPress={() => setMenuOpen(true)} hitSlop={12}>
+          <Ionicons name="ellipsis-vertical" size={20} color="#F0EDE8" />
         </Pressable>
       </View>
 
-      <ProfileIdentity user={user} />
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: bottom + 32 }}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />
+        }
+      >
+        <ProfileIdentity user={user} />
 
-      {/* Divider */}
-      <View
-        style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: 16 }}
-      />
+        <View
+          style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: 16 }}
+        />
 
-      <ProfileStats
-        stats={[
-          { value: user.games_played ?? 0, label: 'Games played' },
-          {
-            value: avgRating > 0 ? avgRating.toFixed(1) : '—',
-            label: 'Avg rating',
-            highlight: true,
-          },
-          { value: '—', label: 'Courts visited' },
-        ]}
-      />
+        <ProfileStats
+          stats={[
+            { value: user.games_played ?? 0, label: 'Games played' },
+            {
+              value: avgRating > 0 ? avgRating.toFixed(1) : '—',
+              label: 'Avg rating',
+              highlight: true,
+            },
+            { value: '—', label: 'Courts visited' },
+          ]}
+        />
 
-      {/* Divider */}
-      <View
-        style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: 16 }}
-      />
+        <View
+          style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: 16 }}
+        />
 
-      <View className="px-4 pt-5 pb-4">
-        <ProfileRepSection ratings={repRatings} />
-      </View>
+        <View className="px-4 pt-5 pb-4">
+          <ProfileRepSection ratings={repRatings} />
+        </View>
 
-      {/* Recent games */}
-      <View className="px-4 pt-2 pb-4">
-        <Text className="font-display text-2xl text-cream mb-4">RECENT GAMES</Text>
-        {isLoading ? (
-          <>
-            <GameCardSkeleton />
-            <GameCardSkeleton />
-          </>
-        ) : recentGames.length === 0 ? (
-          <View className="items-center py-8">
-            <Ionicons name="basketball-outline" size={32} color="#7A7870" />
-            <Text className="text-muted font-sans text-sm mt-3 text-center">
-              No games yet.{'\n'}Join or host a game to get started.
-            </Text>
+        <View className="px-4 pt-2 pb-6">
+          <Text className="font-display text-2xl text-cream mb-4">RECENT GAMES</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#FF5C00" style={{ marginTop: 8 }} />
+          ) : recentGames.length === 0 ? (
+            <View className="items-center py-8">
+              <Ionicons name="basketball-outline" size={32} color="#7A7870" />
+              <Text className="text-muted font-sans text-sm mt-3 text-center">
+                No games yet.{'\n'}Join or host a game to get started.
+              </Text>
+            </View>
+          ) : (
+            recentGames.map((game) => <GameHistoryRow key={game.id} game={game} />)
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Dropdown menu */}
+      {menuOpen && (
+        <>
+          <Pressable
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+            onPress={closeMenu}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              top: top + 52,
+              right: 16,
+              zIndex: 100,
+              backgroundColor: '#202020',
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.10)',
+              minWidth: 180,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.4,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            <Pressable
+              onPress={() => {
+                closeMenu();
+                router.push('/profile/edit');
+              }}
+              className="flex-row items-center gap-3 px-4 py-3"
+            >
+              <Ionicons name="pencil-outline" size={17} color="#F0EDE8" />
+              <Text className="text-cream font-sans text-sm">Edit profile</Text>
+            </Pressable>
+            <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+            <Pressable
+              onPress={() => {
+                closeMenu();
+                router.push('/profile/settings');
+              }}
+              className="flex-row items-center gap-3 px-4 py-3"
+            >
+              <Ionicons name="settings-outline" size={17} color="#F0EDE8" />
+              <Text className="text-cream font-sans text-sm">Settings</Text>
+            </Pressable>
           </View>
-        ) : (
-          recentGames.map((game) => <GameCard key={game.id} game={game} />)
-        )}
-      </View>
-
-      {/* Log out */}
-      <View className="px-4 pt-2">
-        <Pressable
-          onPress={handleLogout}
-          className="rounded-xl py-4 items-center"
-          style={{
-            backgroundColor: 'rgba(239,68,68,0.12)',
-            borderWidth: 1,
-            borderColor: 'rgba(239,68,68,0.2)',
-          }}
-        >
-          <Text className="font-sans font-semibold text-base" style={{ color: '#EF4444' }}>
-            Log out
-          </Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+        </>
+      )}
+    </View>
   );
 }

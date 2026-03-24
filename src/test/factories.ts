@@ -3,7 +3,6 @@ import { User, CurrentUser, Court, Game, GameInvitation } from '@/types';
 export const makeUser = (overrides: Partial<User> = {}): User => ({
   id: 1,
   name: 'Alex Johnson',
-  username: 'alexj',
   city: 'Christchurch',
   position: 'Guard',
   skill_level: 'intermediate',

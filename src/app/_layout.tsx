@@ -74,6 +74,9 @@ export default function RootLayout() {
             <Stack.Screen name="games/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="games/create" options={{ headerShown: false }} />
             <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
+            <Stack.Screen name="profile/email" options={{ headerShown: false }} />
+            <Stack.Screen name="profile/password" options={{ headerShown: false }} />
+            <Stack.Screen name="profile/settings" options={{ headerShown: false }} />
             <Stack.Screen name="users/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           </Stack>

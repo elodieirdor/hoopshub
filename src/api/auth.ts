@@ -2,7 +2,7 @@ import client from './client';
 import { CurrentUser } from '@/types';
 
 export const register = async (data: {
-  full_name: string;
+  name: string;
   email: string;
   password: string;
   city?: string;

@@ -1,4 +1,11 @@
-import { getUser, updateMe, searchInvitable } from '../users';
+import {
+  getUser,
+  updateMe,
+  updateEmail,
+  updatePassword,
+  uploadAvatar,
+  searchInvitable,
+} from '../users';
 import client from '../client';
 import { makeUser } from '@/test/factories';
 
@@ -9,7 +16,6 @@ const mockedClient = client as jest.Mocked<typeof client>;
 const mockUser = makeUser({
   id: 5,
   name: 'Sam Hooper',
-  username: 'samhooper',
   position: 'Guard',
   skill_level: 'advanced',
   games_played: 12,
@@ -54,6 +60,53 @@ describe('getUser (public profile)', () => {
     expect(result.ratings.punctuality).toBe(4.2);
     expect(result.ratings.sportsmanship).toBe(4.8);
     expect(result.recent_games).toEqual([]);
+  });
+});
+
+describe('updateEmail', () => {
+  it('sends a PUT to /me/email and returns updated user', async () => {
+    const updated = { ...mockUser };
+    mockedClient.put = jest.fn().mockResolvedValue({ data: updated });
+
+    const result = await updateEmail({ email: 'new@example.com', current_password: 'secret' });
+
+    expect(mockedClient.put).toHaveBeenCalledWith('/me/email', {
+      email: 'new@example.com',
+      current_password: 'secret',
+    });
+    expect(result).toEqual(updated);
+  });
+});
+
+describe('updatePassword', () => {
+  it('sends a PUT to /me/password', async () => {
+    mockedClient.put = jest.fn().mockResolvedValue({ data: undefined });
+
+    await updatePassword({
+      current_password: 'old',
+      password: 'newpass1',
+      password_confirmation: 'newpass1',
+    });
+
+    expect(mockedClient.put).toHaveBeenCalledWith('/me/password', {
+      current_password: 'old',
+      password: 'newpass1',
+      password_confirmation: 'newpass1',
+    });
+  });
+});
+
+describe('uploadAvatar', () => {
+  it('posts multipart/form-data to /me/avatar and returns updated user', async () => {
+    const updated = { ...mockUser, avatar_url: 'https://cdn.example.com/avatar.jpg' };
+    mockedClient.post = jest.fn().mockResolvedValue({ data: updated });
+
+    const result = await uploadAvatar('file:///tmp/photo.jpg');
+
+    expect(mockedClient.post).toHaveBeenCalledWith('/me/avatar', expect.any(FormData), {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    expect(result.avatar_url).toBe('https://cdn.example.com/avatar.jpg');
   });
 });
 

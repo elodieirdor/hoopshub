@@ -6,23 +6,17 @@ import { z } from 'zod';
 import { router } from 'expo-router';
 import { FormInput } from '@/components/ui/form-input';
 import { useAuthStore } from '@/store/authStore';
+import { SKILL_LEVELS, SKILL_LEVEL_VALUES } from '@/constants/game';
 
 const schema = z.object({
-  full_name: z.string().min(2, 'Enter your full name'),
+  name: z.string().min(2, 'Enter your full name'),
   email: z.email('Enter a valid email'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  skill_level: z.enum(['beginner', 'intermediate', 'advanced', 'comp']),
+  skill_level: z.enum(SKILL_LEVEL_VALUES),
   city: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
-
-const SKILL_LEVELS: { value: FormData['skill_level']; label: string }[] = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-  { value: 'comp', label: 'Comp' },
-];
 
 export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +59,7 @@ export default function RegisterScreen() {
         <View className="mb-4">
           <Controller
             control={control}
-            name="full_name"
+            name="name"
             render={({ field: { onChange, onBlur, value } }) => (
               <FormInput
                 placeholder="Name"
@@ -73,7 +67,7 @@ export default function RegisterScreen() {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 value={value}
-                error={errors.full_name?.message}
+                error={errors.name?.message}
               />
             )}
           />
@@ -125,12 +119,12 @@ export default function RegisterScreen() {
             name="skill_level"
             render={({ field: { onChange, value } }) => (
               <View className="flex-row gap-2 flex-wrap">
-                {SKILL_LEVELS.map(({ value: v, label }) => {
-                  const active = value === v;
+                {SKILL_LEVELS.map(({ key, label }) => {
+                  const active = value === key;
                   return (
                     <Pressable
-                      key={v}
-                      onPress={() => onChange(v)}
+                      key={key}
+                      onPress={() => onChange(key)}
                       className={
                         active
                           ? 'bg-orange rounded-full px-4 py-2'
