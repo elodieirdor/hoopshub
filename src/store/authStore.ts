@@ -13,6 +13,7 @@ interface AuthState {
   register: (data: Parameters<typeof AuthApi.register>[0]) => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
+  setUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -47,6 +48,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     await storage.set('auth_token', token);
     set({ user, token, isAuthenticated: true });
   },
+
+  setUser: (user) => set({ user }),
 
   logout: async () => {
     await AuthApi.logout();

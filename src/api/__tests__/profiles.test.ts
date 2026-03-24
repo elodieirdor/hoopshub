@@ -1,4 +1,4 @@
-import { getUser, updateMe, searchInvitable } from '../users';
+import { getUser, updateMe, uploadAvatar, searchInvitable } from '../users';
 import client from '../client';
 import { makeUser } from '@/test/factories';
 
@@ -55,6 +55,23 @@ describe('getUser (public profile)', () => {
     expect(result.ratings.sportsmanship).toBe(4.8);
     expect(result.recent_games).toEqual([]);
   });
+});
+
+describe('uploadAvatar', () => {
+  it('posts multipart/form-data to /me/avatar and returns updated user', async () => {
+    const updated = { ...mockUser, avatar_url: 'https://cdn.example.com/avatar.jpg' };
+    mockedClient.post = jest.fn().mockResolvedValue({ data: updated });
+
+    const result = await uploadAvatar('file:///tmp/photo.jpg');
+
+    expect(mockedClient.post).toHaveBeenCalledWith(
+      '/me/avatar',
+      expect.any(FormData),
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    expect(result.avatar_url).toBe('https://cdn.example.com/avatar.jpg');
+  });
+
 });
 
 describe('searchInvitable', () => {
