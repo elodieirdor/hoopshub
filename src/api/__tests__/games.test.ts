@@ -9,7 +9,7 @@ const mockedClient = client as jest.Mocked<typeof client>;
 const mockGame = makeGame({
   id: 42,
   host_id: 99,
-  host: makeUser({ id: 99, username: 'ballerNZ', name: 'Alex Baller' }),
+  host: makeUser({ id: 99, name: 'Alex Baller' }),
   court: makeCourt({ id: 1 }),
   description: '5v5 at Cowles',
 });

@@ -1,7 +1,6 @@
 export interface User {
   id: number;
   name: string;
-  username: string;
   city: string | null;
   position: 'Guard' | 'Forward' | 'Centre' | 'Any' | null;
   skill_level: 'beginner' | 'intermediate' | 'advanced' | 'comp';

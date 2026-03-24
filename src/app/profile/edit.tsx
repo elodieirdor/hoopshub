@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  Image,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, Image, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,10 +17,6 @@ import { SKILL_LEVELS, SKILL_LEVEL_VALUES, POSITION_VALUES } from '@/constants/g
 
 const schema = z.object({
   name: z.string().min(2, 'At least 2 characters'),
-  username: z
-    .string()
-    .min(3, 'At least 3 characters')
-    .regex(/^[a-z0-9_]+$/, 'Lowercase letters, numbers, and underscores only'),
   city: z.string().nullable().optional(),
   position: z.enum(POSITION_VALUES).nullable().optional(),
   skill_level: z.enum(SKILL_LEVEL_VALUES),
@@ -52,7 +40,6 @@ export default function EditProfileScreen() {
     resolver: zodResolver(schema),
     defaultValues: {
       name: user.name ?? '',
-      username: user.username ?? '',
       city: user.city ?? '',
       position: user.position ?? null,
       skill_level: user.skill_level ?? 'beginner',
@@ -175,23 +162,6 @@ export default function EditProfileScreen() {
                 placeholder="Your name"
                 autoCapitalize="words"
                 error={errors.name?.message}
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="username"
-            render={({ field: { value, onChange, onBlur } }) => (
-              <FormInput
-                label="Username"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="your_handle"
-                autoCapitalize="none"
-                autoCorrect={false}
-                error={errors.username?.message}
               />
             )}
           />

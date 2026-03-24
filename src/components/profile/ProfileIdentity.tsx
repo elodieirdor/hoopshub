@@ -44,7 +44,6 @@ export function ProfileIdentity({
       <Text className="font-display text-3xl text-cream mb-1">{user.name.toUpperCase()}</Text>
 
       <Text className="text-muted font-sans text-sm mb-4">
-        @{user.username}
         {user.city ? ` · ${user.city}` : ''}
       </Text>
 

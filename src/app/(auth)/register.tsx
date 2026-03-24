@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { SKILL_LEVELS, SKILL_LEVEL_VALUES } from '@/constants/game';
 
 const schema = z.object({
-  full_name: z.string().min(2, 'Enter your full name'),
+  name: z.string().min(2, 'Enter your full name'),
   email: z.email('Enter a valid email'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   skill_level: z.enum(SKILL_LEVEL_VALUES),
@@ -59,7 +59,7 @@ export default function RegisterScreen() {
         <View className="mb-4">
           <Controller
             control={control}
-            name="full_name"
+            name="name"
             render={({ field: { onChange, onBlur, value } }) => (
               <FormInput
                 placeholder="Name"
@@ -67,7 +67,7 @@ export default function RegisterScreen() {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 value={value}
-                error={errors.full_name?.message}
+                error={errors.name?.message}
               />
             )}
           />

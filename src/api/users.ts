@@ -11,6 +11,19 @@ export const updateMe = async (data: Partial<User>) => {
   return res.data;
 };
 
+export const updateEmail = async (data: { email: string; current_password: string }) => {
+  const res = await client.put<User>('/me/email', data);
+  return res.data;
+};
+
+export const updatePassword = async (data: {
+  current_password: string;
+  password: string;
+  password_confirmation: string;
+}) => {
+  await client.put('/me/password', data);
+};
+
 export const uploadAvatar = async (uri: string): Promise<User> => {
   const filename = uri.split('/').pop() ?? 'avatar.jpg';
   const ext = (filename.split('.').pop() ?? 'jpg').toLowerCase();

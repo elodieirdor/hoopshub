@@ -12,7 +12,7 @@ const mockInvitation = makeInvitation({
   inviter_id: 1,
   invitee_id: 2,
   created_at: '2026-03-24T00:00:00Z',
-  inviter: makeUser({ id: 1, name: 'Alex', username: 'alex' }),
+  inviter: makeUser({ id: 1, name: 'Alex' }),
 });
 
 describe('getMyInvitations', () => {
