@@ -2,7 +2,9 @@ import client from './client';
 import { Court } from '@/types';
 
 export const getCourts = async (params?: {
-  city?: string;
+  lat?: number;
+  lng?: number;
+  radius_km?: number;
   court_type?: string;
   lit?: boolean;
   is_free?: boolean;

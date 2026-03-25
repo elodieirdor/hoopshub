@@ -18,6 +18,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { useLocationStore } from '@/store/locationStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,10 +39,12 @@ export default function RootLayout() {
   });
 
   const { isAuthenticated, isLoading, loadUser } = useAuthStore();
+  const initLocation = useLocationStore((s) => s.init);
 
   useEffect(() => {
     loadUser();
-  }, [loadUser]);
+    initLocation();
+  }, [loadUser, initLocation]);
 
   useEffect(() => {
     if (!fontsLoaded || isLoading) return;

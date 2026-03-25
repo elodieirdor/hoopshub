@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { router } from 'expo-router';
 import { FormInput } from '@/components/ui/form-input';
 import { useAuthStore } from '@/store/authStore';
+import { useLocationStore } from '@/store/locationStore';
+import { CityPicker } from '@/components/ui/CityPicker';
 import { SKILL_LEVELS, SKILL_LEVEL_VALUES } from '@/constants/game';
 
 const schema = z.object({
@@ -20,6 +22,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
+  const { activeCity } = useLocationStore();
 
   const {
     control,
@@ -154,14 +157,9 @@ export default function RegisterScreen() {
           <Controller
             control={control}
             name="city"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <FormInput
-                placeholder="City (optional)"
-                autoCorrect={false}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
+            defaultValue={activeCity?.name}
+            render={({ field: { onChange, value } }) => (
+              <CityPicker value={value} onChange={(city) => onChange(city.name)} />
             )}
           />
         </View>

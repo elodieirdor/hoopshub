@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, Pressable, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
-import { joinGame, leaveGame } from '@/api/games';
+import { getGames, joinGame, leaveGame } from '@/api/games';
 import { Game } from '@/types';
 import { GameCard } from '@/components/games/GameCard';
 import { GameCardSkeleton } from '@/components/games/GameCardSkeleton';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { useGames } from '@/hooks/useGames';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type FilterKey, applyFilters } from '@/utils/gameFilters';
+import { useLocationStore } from '@/store/locationStore';
 
 const CHIPS: { key: FilterKey; label: string }[] = [
   { key: 'today', label: 'Today' },
@@ -21,15 +21,32 @@ const CHIPS: { key: FilterKey; label: string }[] = [
   { key: 'nearme', label: 'Near me' },
 ];
 
-const GAMES_PARAMS = { city: 'Christchurch', status: 'open' };
-
 export default function GamesScreen() {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const currentUser = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
-  const { games, loading, refreshing, error, refresh } = useGames(GAMES_PARAMS);
-  const GAMES_KEY = ['games', GAMES_PARAMS];
+  const { userLat, userLng, activeCity, locationReady } = useLocationStore();
+
+  const gamesParams = {
+    lat: userLat ?? activeCity?.lat,
+    lng: userLng ?? activeCity?.lng,
+    radius_km: activeCity?.radius_km ?? 30,
+    status: 'open' as const,
+  };
+  const GAMES_KEY = ['games', { cityId: activeCity?.id, status: 'open' }];
+
+  const {
+    data: games = [],
+    isLoading: loading,
+    isRefetching: refreshing,
+    error: gamesError,
+    refetch: refresh,
+  } = useQuery({
+    queryKey: GAMES_KEY,
+    queryFn: () => getGames(gamesParams),
+    enabled: locationReady,
+  });
 
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
   const filtered = useMemo(() => applyFilters(games, activeFilters), [games, activeFilters]);
@@ -127,8 +144,8 @@ export default function GamesScreen() {
             <GameCardSkeleton key={i} />
           ))}
         </View>
-      ) : error ? (
-        <ErrorState message={error} onRetry={refresh} />
+      ) : gamesError ? (
+        <ErrorState message="Failed to load games" onRetry={refresh} />
       ) : (
         <FlatList
           data={filtered}

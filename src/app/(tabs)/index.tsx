@@ -26,6 +26,7 @@ import { Court } from '@/types';
 import { haversineKm } from '@/utils/geo';
 import CourtCardSkeleton from '@/components/courts/CourtCardSkeleton';
 import MapSkeleton from '@/components/courts/MapSkeleton';
+import { useLocationStore } from '@/store/locationStore';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
@@ -55,15 +56,20 @@ export default function CourtsScreen() {
   const listRef = useRef<FlatList>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const city = user?.city ?? 'Christchurch';
+  const { userLat, userLng, activeCity } = useLocationStore();
   const {
     data: courts = [],
     isLoading: loading,
     isRefetching: refreshing,
     refetch,
   } = useQuery({
-    queryKey: ['courts', { city }],
-    queryFn: () => getCourts({ city }),
+    queryKey: ['courts', activeCity?.id],
+    queryFn: () =>
+      getCourts({
+        lat: userLat ?? activeCity?.lat,
+        lng: userLng ?? activeCity?.lng,
+        radius_km: activeCity?.radius_km ?? 30,
+      }),
   });
 
   const [search, setSearch] = useState('');
@@ -197,8 +203,8 @@ export default function CourtsScreen() {
           style={{ flex: 1 }}
           customMapStyle={DARK_MAP_STYLE}
           initialRegion={{
-            latitude: -43.5321,
-            longitude: 172.6362,
+            latitude: activeCity?.lat ?? -43.5321,
+            longitude: activeCity?.lng ?? 172.6362,
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}

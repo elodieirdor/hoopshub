@@ -2,7 +2,9 @@ import client from './client';
 import { Game } from '@/types';
 
 export const getGames = async (params?: {
-  city?: string;
+  lat?: number;
+  lng?: number;
+  radius_km?: number;
   skill_level?: string;
   status?: string;
   court_id?: number;

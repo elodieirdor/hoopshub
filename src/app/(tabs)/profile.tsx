@@ -13,7 +13,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
+import { useLocationStore } from '@/store/locationStore';
 import { getGames } from '@/api/games';
+import { City } from '@/types';
+import { CityPicker } from '@/components/ui/CityPicker';
 import { GameHistoryRow } from '@/components/games/GameHistoryRow';
 import { ProfileIdentity } from '@/components/profile/ProfileIdentity';
 import { ProfileStats } from '@/components/profile/ProfileStats';
@@ -23,6 +26,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+  const { userLat, userLng, activeCity, setActiveCity, locationReady } = useLocationStore();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const {
@@ -31,15 +35,19 @@ export default function ProfileScreen() {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ['games', 'mine', user?.id, user?.city],
+    queryKey: ['games', 'mine', user?.id, activeCity?.id],
     queryFn: async () => {
-      const all = await getGames({ city: user?.city ?? 'Christchurch' });
+      const all = await getGames({
+        lat: userLat ?? activeCity?.lat,
+        lng: userLng ?? activeCity?.lng,
+        radius_km: activeCity?.radius_km ?? 30,
+      });
       return all
         .filter((g) => g.game_players?.some((p) => p.player_id === user!.id))
         .slice(-5)
         .reverse();
     },
-    enabled: !!user,
+    enabled: !!user && locationReady,
   });
 
   if (!user) {
@@ -78,6 +86,13 @@ export default function ProfileScreen() {
         }
       >
         <ProfileIdentity user={user} />
+
+        {/* City switcher */}
+        <CityPicker
+          variant="row"
+          value={activeCity?.name}
+          onChange={(city: City) => setActiveCity(city)}
+        />
 
         <View
           style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: 16 }}

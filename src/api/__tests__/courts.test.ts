@@ -18,29 +18,31 @@ describe('getCourts', () => {
     expect(result).toEqual([mockCourt]);
   });
 
-  it('passes city param', async () => {
+  it('passes lat/lng params', async () => {
     mockedClient.get = jest.fn().mockResolvedValue({ data: [mockCourt] });
 
-    const result = await getCourts({ city: 'Christchurch' });
+    const result = await getCourts({ lat: -43.5321, lng: 172.6362 });
 
-    expect(mockedClient.get).toHaveBeenCalledWith('/courts', { params: { city: 'Christchurch' } });
+    expect(mockedClient.get).toHaveBeenCalledWith('/courts', {
+      params: { lat: -43.5321, lng: 172.6362 },
+    });
     expect(result).toEqual([mockCourt]);
   });
 
   it('passes filter params', async () => {
     mockedClient.get = jest.fn().mockResolvedValue({ data: [] });
 
-    await getCourts({ city: 'Auckland', lit: true, is_free: false });
+    await getCourts({ lat: -36.8485, lng: 174.7633, lit: true, is_free: false });
 
     expect(mockedClient.get).toHaveBeenCalledWith('/courts', {
-      params: { city: 'Auckland', lit: true, is_free: false },
+      params: { lat: -36.8485, lng: 174.7633, lit: true, is_free: false },
     });
   });
 
   it('returns empty array when no courts found', async () => {
     mockedClient.get = jest.fn().mockResolvedValue({ data: [] });
 
-    const result = await getCourts({ city: 'Nowhere' });
+    const result = await getCourts({ lat: -999, lng: -999 });
 
     expect(result).toEqual([]);
   });

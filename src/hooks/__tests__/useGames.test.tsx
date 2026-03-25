@@ -60,12 +60,12 @@ describe('useGames', () => {
   it('passes params to getGames', async () => {
     mockedGetGames.mockResolvedValue([]);
 
-    renderHook(() => useGames({ city: 'Christchurch', status: 'open' }), {
+    renderHook(() => useGames({ lat: -43.5321, lng: 172.6362, status: 'open' }), {
       wrapper: createWrapper(),
     });
 
     await waitFor(() => {
-      expect(mockedGetGames).toHaveBeenCalledWith({ city: 'Christchurch', status: 'open' });
+      expect(mockedGetGames).toHaveBeenCalledWith({ lat: -43.5321, lng: 172.6362, status: 'open' });
     });
   });
 
