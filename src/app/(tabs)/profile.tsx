@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  RefreshControl,
+  ActivityIndicator,
+  Modal,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -112,55 +120,56 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      {/* Dropdown menu */}
-      {menuOpen && (
-        <>
-          <Pressable
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            onPress={closeMenu}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              top: top + 52,
-              right: 16,
-              zIndex: 100,
-              backgroundColor: '#202020',
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.10)',
-              minWidth: 180,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.4,
-              shadowRadius: 12,
-              elevation: 8,
-            }}
-          >
-            <Pressable
-              onPress={() => {
-                closeMenu();
-                router.push('/profile/edit');
-              }}
-              className="flex-row items-center gap-3 px-4 py-3"
-            >
-              <Ionicons name="pencil-outline" size={17} color="#F0EDE8" />
-              <Text className="text-cream font-sans text-sm">Edit profile</Text>
-            </Pressable>
-            <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-            <Pressable
-              onPress={() => {
-                closeMenu();
-                router.push('/profile/settings');
-              }}
-              className="flex-row items-center gap-3 px-4 py-3"
-            >
-              <Ionicons name="settings-outline" size={17} color="#F0EDE8" />
-              <Text className="text-cream font-sans text-sm">Settings</Text>
-            </Pressable>
-          </View>
-        </>
-      )}
+      {/* Options modal */}
+      <Modal visible={menuOpen} transparent animationType="slide" onRequestClose={closeMenu}>
+        <Pressable
+          className="flex-1 justify-end"
+          style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+          onPress={closeMenu}
+        >
+          <Pressable onPress={() => {}}>
+            <View className="bg-surface rounded-t-[20px] border border-white/[0.08] overflow-hidden">
+              {/* Handle */}
+              <View className="items-center pt-3 pb-2">
+                <View className="w-9 h-1 rounded-full bg-white/20" />
+              </View>
+
+              <Pressable
+                onPress={() => {
+                  closeMenu();
+                  router.push('/profile/edit');
+                }}
+                className="flex-row items-center gap-4 px-5 py-4"
+              >
+                <Ionicons name="pencil-outline" size={20} color="#F0EDE8" />
+                <Text className="text-cream font-sans text-base">Edit profile</Text>
+              </Pressable>
+
+              <View className="h-px bg-white/[0.08] mx-5" />
+
+              <Pressable
+                onPress={() => {
+                  closeMenu();
+                  router.push('/profile/settings');
+                }}
+                className="flex-row items-center gap-4 px-5 py-4"
+              >
+                <Ionicons name="settings-outline" size={20} color="#F0EDE8" />
+                <Text className="text-cream font-sans text-base">Settings</Text>
+              </Pressable>
+
+              <View className="h-px bg-white/[0.08] mx-5" />
+
+              <Pressable
+                onPress={closeMenu}
+                className="flex-row items-center justify-center px-5 py-4"
+              >
+                <Text className="text-muted font-sans text-base">Cancel</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
