@@ -13,7 +13,7 @@ export default function CreateGameScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { court_id: courtIdParam } = useLocalSearchParams<{ court_id?: string }>();
-  const { userLat, userLng, activeCity } = useLocationStore();
+  const { activeCity } = useLocationStore();
 
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -22,10 +22,11 @@ export default function CreateGameScreen() {
     queryKey: ['courts', activeCity?.id],
     queryFn: () =>
       getCourts({
-        lat: userLat ?? activeCity?.lat,
-        lng: userLng ?? activeCity?.lng,
+        lat: activeCity?.lat,
+        lng: activeCity?.lng,
         radius_km: activeCity?.radius_km ?? 30,
       }),
+    enabled: !!activeCity,
   });
 
   const {

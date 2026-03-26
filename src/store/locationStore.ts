@@ -1,7 +1,9 @@
 import { create } from 'zustand';
-import * as Location from 'expo-location';
+import * as SecureStore from 'expo-secure-store';
 import { City } from '@/types';
 import { getCities } from '@/api/cities';
+
+const CITY_STORE_KEY = 'active_city_id';
 
 interface LocationState {
   userLat: number | null;
@@ -12,6 +14,8 @@ interface LocationState {
 
   init: () => Promise<void>;
   setActiveCity: (city: City) => void;
+  setUserLocation: (lat: number, lng: number) => void;
+  syncCityWithUser: (cityName: string | null | undefined) => Promise<void>;
 }
 
 export const useLocationStore = create<LocationState>((set, get) => ({
@@ -22,7 +26,6 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   locationReady: false,
 
   init: async () => {
-    // Load supported cities from API
     let cities: City[] = [];
     try {
       const result = await getCities();
@@ -37,38 +40,38 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       return;
     }
 
-    // Request location permission
-    const { status } = await Location.requestForegroundPermissionsAsync();
-
-    if (status !== 'granted') {
-      const defaultCity = cities.find((c) => c.slug === 'christchurch') ?? cities[0];
-      set({ activeCity: defaultCity, locationReady: true });
-      return;
+    // Priority 1: user's explicit manual choice (persisted)
+    const savedId = await SecureStore.getItemAsync(CITY_STORE_KEY);
+    if (savedId) {
+      const saved = cities.find((c) => String(c.id) === savedId);
+      if (saved) {
+        set({ activeCity: saved, locationReady: true });
+        return;
+      }
     }
 
-    // Get current position
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-
-    const { latitude: lat, longitude: lng } = location.coords;
-
-    // Find nearest supported city
-    const nearest = cities.reduce((closest, city) => {
-      const dist = Math.sqrt(Math.pow(city.lat - lat, 2) + Math.pow(city.lng - lng, 2));
-      const closestDist = Math.sqrt(
-        Math.pow(closest.lat - lat, 2) + Math.pow(closest.lng - lng, 2),
-      );
-      return dist < closestDist ? city : closest;
-    });
-
-    set({
-      userLat: lat,
-      userLng: lng,
-      activeCity: nearest,
-      locationReady: true,
-    });
+    // Priority 2: fall back to default — syncCityWithUser() will override
+    // this with the user's profile city once auth loads
+    const defaultCity = cities.find((c) => c.slug === 'christchurch') ?? cities[0];
+    set({ activeCity: defaultCity, locationReady: true });
   },
 
-  setActiveCity: (city) => set({ activeCity: city }),
+  // Called from authStore after loading user — syncs profile city unless
+  // the user has an explicit manual SecureStore preference.
+  syncCityWithUser: async (cityName) => {
+    if (!cityName) return;
+    const savedId = await SecureStore.getItemAsync(CITY_STORE_KEY);
+    if (savedId) return; // manual preference takes priority
+    const { cities } = get();
+    const city = cities.find((c) => c.name === cityName);
+    if (city) set({ activeCity: city });
+  },
+
+  // Called from the map tab after GPS permission is granted.
+  setUserLocation: (lat, lng) => set({ userLat: lat, userLng: lng }),
+
+  setActiveCity: (city) => {
+    SecureStore.setItemAsync(CITY_STORE_KEY, String(city.id));
+    set({ activeCity: city });
+  },
 }));
