@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getGames } from '@/api/games';
+import { gameQueries } from '@/api/queries';
 
 type GetGamesParams = Parameters<typeof getGames>[0];
 
@@ -10,10 +11,7 @@ export function useGames(params?: GetGamesParams) {
     isRefetching,
     error,
     refetch,
-  } = useQuery({
-    queryKey: ['games', params],
-    queryFn: () => getGames(params),
-  });
+  } = useQuery(gameQueries.list(params));
 
   return {
     games,

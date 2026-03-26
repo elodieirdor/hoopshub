@@ -5,8 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameForm';
-import { getCourts } from '@/api/courts';
-import { getGame, updateGame } from '@/api/games';
+import { updateGame } from '@/api/games';
+import { courtQueries, gameQueries } from '@/api/queries';
 import { Court } from '@/types';
 import { useLocationStore } from '@/store/locationStore';
 
@@ -19,22 +19,9 @@ export default function EditGameScreen() {
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const { data: game, isLoading: gameLoading } = useQuery({
-    queryKey: ['game', id],
-    queryFn: () => getGame(Number(id)),
-    enabled: !!id,
-  });
+  const { data: game, isLoading: gameLoading } = useQuery(gameQueries.detail(id!));
 
-  const { data: courts = [], isLoading: courtsLoading } = useQuery({
-    queryKey: ['courts', activeCity?.id],
-    queryFn: () =>
-      getCourts({
-        lat: activeCity?.lat,
-        lng: activeCity?.lng,
-        radius_km: activeCity?.radius_km ?? 30,
-      }),
-    enabled: !!activeCity,
-  });
+  const { data: courts = [], isLoading: courtsLoading } = useQuery(courtQueries.list(activeCity));
 
   const {
     control,
@@ -68,7 +55,7 @@ export default function EditGameScreen() {
   const updateMutation = useMutation({
     mutationFn: (data: Partial<typeof game>) => updateGame(Number(id), data!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['game', id] });
+      queryClient.invalidateQueries({ queryKey: gameQueries.detail(id!).queryKey });
       router.back();
     },
     onError: () => setApiError('Failed to save changes. Please try again.'),

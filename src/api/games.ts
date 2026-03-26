@@ -55,8 +55,6 @@ export const deleteGame = async (id: number) => {
   await client.delete(`/games/${id}`);
 };
 
-export const MY_GAMES_KEY = ['my-games'] as const;
-
 export const getMyGames = async (type: 'upcoming' | 'past' = 'upcoming') => {
   const res = await client.get<Game[]>('/users/me/games', { params: { type } });
   return res.data;

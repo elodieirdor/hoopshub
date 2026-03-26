@@ -80,7 +80,9 @@ describe('getMyGames', () => {
 
     const result = await getMyGames();
 
-    expect(mockedClient.get).toHaveBeenCalledWith('/users/me/games', { params: { type: 'upcoming' } });
+    expect(mockedClient.get).toHaveBeenCalledWith('/users/me/games', {
+      params: { type: 'upcoming' },
+    });
     expect(result).toEqual([mockGame]);
   });
 

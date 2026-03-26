@@ -3,7 +3,8 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, Image } fr
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getGame, joinGame, leaveGame, updateGame } from '@/api/games';
+import { joinGame, leaveGame, updateGame } from '@/api/games';
+import { gameQueries } from '@/api/queries';
 import { useAuthStore } from '@/store/authStore';
 import { BasketballCourtSVG } from '@/components/games/BasketballCourtSVG';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -17,18 +18,10 @@ export default function GameDetailScreen() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
 
-  const {
-    data: game,
-    isLoading: loading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ['game', id],
-    queryFn: () => getGame(Number(id)),
-    enabled: !!id,
-  });
+  const { data: game, isLoading: loading, error, refetch } = useQuery(gameQueries.detail(id!));
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['game', id] });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: gameQueries.detail(id!).queryKey });
 
   const joinMutation = useMutation({
     mutationFn: () => joinGame(game!.id),

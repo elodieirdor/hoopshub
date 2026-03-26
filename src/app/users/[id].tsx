@@ -10,7 +10,7 @@ import { ProfileStats } from '@/components/profile/ProfileStats';
 import { ProfileRepSection } from '@/components/profile/ProfileRepSection';
 import { SKILL_COLORS, formatDate } from '@/utils/formatters';
 import { Badge } from '@/components/ui/Badge';
-import { getUser } from '@/api/users';
+import { userQueries } from '@/api/queries';
 
 const AVATAR_PALETTE = ['#3B82F6', '#22C55E', '#F59E0B', '#8B5CF6', '#06B6D4', '#EF4444'];
 
@@ -23,16 +23,7 @@ export default function PublicProfileScreen() {
   const router = useRouter();
   const { top } = useSafeAreaInsets();
 
-  const {
-    data: profile,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ['user', id],
-    queryFn: () => getUser(Number(id)),
-    enabled: !!id,
-  });
+  const { data: profile, isLoading, error, refetch } = useQuery(userQueries.detail(id!));
 
   const handleShare = async () => {
     if (!profile) return;

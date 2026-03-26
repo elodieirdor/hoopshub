@@ -3,7 +3,7 @@ import { View, Text, FlatList, Pressable, RefreshControl, ScrollView } from 'rea
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
-import { getGames, getMyGames, MY_GAMES_KEY } from '@/api/games';
+import { gameQueries } from '@/api/queries';
 import { GameCard } from '@/components/games/GameCard';
 import { GameCardSkeleton } from '@/components/games/GameCardSkeleton';
 import { FilterChips } from '@/components/ui/FilterChips';
@@ -26,18 +26,7 @@ export default function GamesScreen() {
   const { top, bottom } = useSafeAreaInsets();
   const currentUser = useAuthStore((s) => s.user);
   const { activeCity, locationReady } = useLocationStore();
-  const { data: upcoming = [] } = useQuery({
-    queryKey: [...MY_GAMES_KEY, 'upcoming'],
-    queryFn: () => getMyGames('upcoming'),
-  });
-
-  const gamesParams = {
-    lat: activeCity?.lat,
-    lng: activeCity?.lng,
-    radius_km: activeCity?.radius_km ?? 30,
-    status: 'open' as const,
-  };
-  const GAMES_KEY = ['games', { cityId: activeCity?.id, status: 'open' }];
+  const { data: upcoming = [] } = useQuery(gameQueries.myUpcoming());
 
   const {
     data: games = [],
@@ -45,11 +34,7 @@ export default function GamesScreen() {
     isRefetching: refreshing,
     error: gamesError,
     refetch: refresh,
-  } = useQuery({
-    queryKey: GAMES_KEY,
-    queryFn: () => getGames(gamesParams),
-    enabled: locationReady && !!activeCity,
-  });
+  } = useQuery(gameQueries.feedForCity(activeCity, locationReady && !!activeCity));
 
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
   const filtered = useMemo(() => applyFilters(games, activeFilters), [games, activeFilters]);

@@ -75,7 +75,8 @@ src/
 │   ├── client.ts                # Axios instance — attaches Bearer token automatically
 │   ├── auth.ts                  # register, login, logout, me
 │   ├── courts.ts                # getCourts, getCourt, createCourt
-│   ├── games.ts                 # getGames, getGame, createGame, joinGame, leaveGame, updateGame, deleteGame, getMyGames, getCourtGames — also exports MY_GAMES_KEY
+│   ├── games.ts                 # getGames, getGame, createGame, joinGame, leaveGame, updateGame, deleteGame, getMyGames, getCourtGames
+│   ├── queries.ts               # Centralized queryOptions — courtQueries, gameQueries, userQueries
 │   └── profiles.ts              # getProfile, updateProfile
 ├── components/
 │   ├── ui/                      # Shared: Button, Input, Badge, Card, Avatar, LoadingScreen
@@ -152,22 +153,35 @@ completed: muted  (#7A7870)
 ## Common Patterns
 
 ### Fetching data
-Use React Query — not `useState`/`useEffect`.
+Use React Query — not `useState`/`useEffect`. Always use `queryOptions` from `src/api/queries.ts` — never hardcode queryKeys inline.
 ```typescript
-const { data: games = [], isLoading, error } = useQuery({
-  queryKey: ['games', params],
-  queryFn: () => getGames(params),
-});
+import { gameQueries, courtQueries, userQueries } from '@/api/queries';
+
+const { data: game } = useQuery(gameQueries.detail(id));
+const { data: courts = [] } = useQuery(courtQueries.list(activeCity));
+const { data: upcoming = [] } = useQuery(gameQueries.myUpcoming());
 ```
+
+Available query factories:
+- `courtQueries.list(city)` — courts for a city, staleTime 60min
+- `courtQueries.detail(id)` — single court, staleTime 30min
+- `gameQueries.feedForCity(city, enabled)` — open games feed for city, staleTime 2min
+- `gameQueries.list(params?)` — games with arbitrary params, staleTime 2min
+- `gameQueries.detail(id)` — single game, staleTime 1min
+- `gameQueries.forCourt(courtId)` — games at a court
+- `gameQueries.myUpcoming()` — current user's upcoming games
+- `userQueries.detail(id)` — public user profile
 
 ### Mutations
 ```typescript
 const mutation = useMutation({
   mutationFn: () => joinGame(id),
-  onSuccess: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
+  onSuccess: () =>
+    queryClient.invalidateQueries({ queryKey: gameQueries.detail(id).queryKey }),
   onError: () => Alert.alert('Error', 'Something went wrong.'),
 });
 ```
+Always use `.queryKey` from the query factory for invalidations — never hardcode the key.
 
 ### Form with react-hook-form + zod
 ```typescript

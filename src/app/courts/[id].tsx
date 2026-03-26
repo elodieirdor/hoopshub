@@ -4,8 +4,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
-import { getCourt } from '@/api/courts';
-import { getCourtGames } from '@/api/games';
+import { courtQueries, gameQueries } from '@/api/queries';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { GameCard } from '@/components/games/GameCard';
 import { Badge } from '@/components/ui/Badge';
@@ -15,19 +14,9 @@ export default function CourtDetailScreen() {
   const courtId = Number(id);
   const router = useRouter();
 
-  const { data: court, isLoading } = useQuery({
-    queryKey: ['court', courtId],
-    queryFn: () => getCourt(courtId),
-    enabled: !!courtId,
-  });
+  const { data: court, isLoading } = useQuery(courtQueries.detail(courtId));
 
-  const GAMES_KEY = ['games', { court_id: courtId }];
-
-  const { data: allGames = [] } = useQuery({
-    queryKey: GAMES_KEY,
-    queryFn: () => getCourtGames(courtId),
-    enabled: !!courtId,
-  });
+  const { data: allGames = [] } = useQuery(gameQueries.forCourt(courtId));
 
   const games = useMemo(
     () =>

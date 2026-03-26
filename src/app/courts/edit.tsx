@@ -6,7 +6,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getCourt, updateCourt } from '@/api/courts';
+import { updateCourt } from '@/api/courts';
+import { courtQueries } from '@/api/queries';
 import { SegmentedControl } from '@/components/forms/SegmentedControl';
 import { Toggle } from '@/components/forms/Toggle';
 
@@ -25,11 +26,7 @@ export default function EditCourtScreen() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  const { data: court, isLoading: initialLoading } = useQuery({
-    queryKey: ['court', id],
-    queryFn: () => getCourt(Number(id)),
-    enabled: !!id,
-  });
+  const { data: court, isLoading: initialLoading } = useQuery(courtQueries.detail(id!));
 
   const { control, handleSubmit, reset } = useForm<FormData>({
     resolver: zodResolver(schema),
