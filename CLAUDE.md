@@ -6,7 +6,9 @@ HoopsHub NZ is a basketball pickup game finder app for New Zealand. This repo is
 ## Tech Stack
 - **Framework**: Expo (SDK 51+) with Expo Router (file-based routing)
 - **Language**: TypeScript
+- **Styling**: Uniwind (Tailwind v4 for React Native) — use `className` for static styles, inline `style` for dynamic/computed values
 - **State**: Zustand (`src/store/authStore.ts`)
+- **Data fetching**: React Query (`@tanstack/react-query`) — use `useQuery` / `useMutation`, not `useState`/`useEffect`
 - **Forms**: react-hook-form + zod
 - **HTTP**: axios (`src/api/client.ts`)
 - **Auth storage**: expo-secure-store (token key: `auth_token`)
@@ -73,21 +75,21 @@ src/
 │   ├── client.ts                # Axios instance — attaches Bearer token automatically
 │   ├── auth.ts                  # register, login, logout, me
 │   ├── courts.ts                # getCourts, getCourt, createCourt
-│   ├── games.ts                 # getGames, getGame, createGame, joinGame, leaveGame, updateGame, deleteGame
+│   ├── games.ts                 # getGames, getGame, createGame, joinGame, leaveGame, updateGame, deleteGame, getMyGames, getCourtGames
+│   ├── queries.ts               # Centralized queryOptions — courtQueries, gameQueries, userQueries
 │   └── profiles.ts              # getProfile, updateProfile
 ├── components/
 │   ├── ui/                      # Shared: Button, Input, Badge, Card, Avatar, LoadingScreen
 │   ├── courts/                  # CourtCard, CourtPin
-│   ├── games/                   # GameCard, PlayerSpots, SkillTag
-│   └── profile/                 # ProfileHeader, RatingRow
+│   ├── games/                   # GameCard, UpcomingGameCard, ScheduleGameCard, SectionHeader, PlayerSpots, SkillTag, GameHistoryRow
+│   └── profile/                 # ProfileIdentity, ProfileStats, ProfileRepSection
 ├── hooks/
-│   ├── useCourts.ts
 │   ├── useGames.ts
 │   └── useProfile.ts
 ├── store/
 │   └── authStore.ts             # user, token, isAuthenticated, isLoading, login, register, logout, loadUser
 └── types/
-    └── index.ts                 # User, Profile, Court, Game, GamePlayer, Rating, ApiError
+    └── index.ts                 # User, CurrentUser, Court, Game, GamePlayer, Rating, GameInvitation, ApiError
 ```
 
 ## Auth Flow
@@ -111,9 +113,9 @@ Always import types from `src/types` — never redefine inline.
 - Court types: indoor / outdoor
 - Player ratings are 1-5 across: punctuality, sportsmanship, skill_accuracy, fun_to_play
 - Host is always shown as first player in game_players list
-- Join button disabled if: game is full, user already joined, or game is cancelled/completed
-- Leave button shown instead of Join if user is already in the game
-- Cancel option shown instead of Join/Leave if user is the host
+- **Join / Leave / Cancel only happen from the game detail screen** (`games/[id].tsx`) — never from cards
+- `GameCard` shows a green "Joined" badge when the auth user is in `game_players`
+- Cancel option (host only) and Leave option (non-host) are in the bottom action bar of the detail screen
 
 ## Skill Level Colors
 ```
@@ -151,25 +153,35 @@ completed: muted  (#7A7870)
 ## Common Patterns
 
 ### Fetching data
+Use React Query — not `useState`/`useEffect`. Always use `queryOptions` from `src/api/queries.ts` — never hardcode queryKeys inline.
 ```typescript
-const [data, setData] = useState<Game[]>([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState<string | null>(null);
+import { gameQueries, courtQueries, userQueries } from '@/api/queries';
 
-useEffect(() => {
-  const fetch = async () => {
-    try {
-      const result = await getGames({ city: 'Christchurch' });
-      setData(result);
-    } catch {
-      setError('Failed to load games');
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetch();
-}, []);
+const { data: game } = useQuery(gameQueries.detail(id));
+const { data: courts = [] } = useQuery(courtQueries.list(activeCity));
+const { data: upcoming = [] } = useQuery(gameQueries.myUpcoming());
 ```
+
+Available query factories:
+- `courtQueries.list(city)` — courts for a city, staleTime 60min
+- `courtQueries.detail(id)` — single court, staleTime 30min
+- `gameQueries.feedForCity(city, enabled)` — open games feed for city, staleTime 2min
+- `gameQueries.list(params?)` — games with arbitrary params, staleTime 2min
+- `gameQueries.detail(id)` — single game, staleTime 1min
+- `gameQueries.forCourt(courtId)` — games at a court
+- `gameQueries.myUpcoming()` — current user's upcoming games
+- `userQueries.detail(id)` — public user profile
+
+### Mutations
+```typescript
+const mutation = useMutation({
+  mutationFn: () => joinGame(id),
+  onSuccess: () =>
+    queryClient.invalidateQueries({ queryKey: gameQueries.detail(id).queryKey }),
+  onError: () => Alert.alert('Error', 'Something went wrong.'),
+});
+```
+Always use `.queryKey` from the query factory for invalidations — never hardcode the key.
 
 ### Form with react-hook-form + zod
 ```typescript

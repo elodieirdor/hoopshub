@@ -1,10 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, RefreshControl } from 'react-native';
+import { View, Text, FlatList, Pressable, RefreshControl, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
-import { getGames, joinGame, leaveGame } from '@/api/games';
-import { Game } from '@/types';
+import { gameQueries } from '@/api/queries';
 import { GameCard } from '@/components/games/GameCard';
 import { GameCardSkeleton } from '@/components/games/GameCardSkeleton';
 import { FilterChips } from '@/components/ui/FilterChips';
@@ -12,6 +11,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type FilterKey, applyFilters } from '@/utils/gameFilters';
 import { useLocationStore } from '@/store/locationStore';
+import { UpcomingGameCard } from '@/components/games/UpcomingGameCard';
 
 const CHIPS: { key: FilterKey; label: string }[] = [
   { key: 'today', label: 'Today' },
@@ -25,16 +25,8 @@ export default function GamesScreen() {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const currentUser = useAuthStore((s) => s.user);
-  const queryClient = useQueryClient();
   const { activeCity, locationReady } = useLocationStore();
-
-  const gamesParams = {
-    lat: activeCity?.lat,
-    lng: activeCity?.lng,
-    radius_km: activeCity?.radius_km ?? 30,
-    status: 'open' as const,
-  };
-  const GAMES_KEY = ['games', { cityId: activeCity?.id, status: 'open' }];
+  const { data: upcoming = [] } = useQuery(gameQueries.myUpcoming());
 
   const {
     data: games = [],
@@ -42,11 +34,7 @@ export default function GamesScreen() {
     isRefetching: refreshing,
     error: gamesError,
     refetch: refresh,
-  } = useQuery({
-    queryKey: GAMES_KEY,
-    queryFn: () => getGames(gamesParams),
-    enabled: locationReady && !!activeCity,
-  });
+  } = useQuery(gameQueries.feedForCity(activeCity, locationReady && !!activeCity));
 
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
   const filtered = useMemo(() => applyFilters(games, activeFilters), [games, activeFilters]);
@@ -60,62 +48,6 @@ export default function GamesScreen() {
     });
   };
 
-  const joinMutation = useMutation({
-    mutationFn: (id: number) => joinGame(id),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: GAMES_KEY });
-      const prev = queryClient.getQueryData<Game[]>(GAMES_KEY);
-      queryClient.setQueryData<Game[]>(GAMES_KEY, (old = []) =>
-        old.map((g) => {
-          if (g.id !== id) return g;
-          const newFilled = (g.game_players?.length ?? 0) + 1;
-          return {
-            ...g,
-            game_players: [
-              ...(g.game_players ?? []),
-              {
-                id: -1,
-                game_id: id,
-                player_id: currentUser?.id ?? -1,
-                joined_at: new Date().toISOString(),
-                player: currentUser!,
-              },
-            ],
-            status: newFilled >= g.max_players ? ('full' as const) : g.status,
-          };
-        }),
-      );
-      return { prev };
-    },
-    onError: (_, __, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(GAMES_KEY, ctx.prev);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
-  });
-
-  const leaveMutation = useMutation({
-    mutationFn: (id: number) => leaveGame(id),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: GAMES_KEY });
-      const prev = queryClient.getQueryData<Game[]>(GAMES_KEY);
-      queryClient.setQueryData<Game[]>(GAMES_KEY, (old = []) =>
-        old.map((g) => {
-          if (g.id !== id) return g;
-          return {
-            ...g,
-            game_players: (g.game_players ?? []).filter((p) => p.player.id !== currentUser?.id),
-            status: 'open' as const,
-          };
-        }),
-      );
-      return { prev };
-    },
-    onError: (_, __, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(GAMES_KEY, ctx.prev);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
-  });
-
   return (
     <View className="flex-1 bg-dark" style={{ paddingTop: top, paddingBottom: bottom }}>
       {/* Header */}
@@ -127,6 +59,31 @@ export default function GamesScreen() {
         >
           <Text className="text-cream font-sans font-semibold text-sm">Post game</Text>
         </Pressable>
+      </View>
+
+      {/* Upcoming games carousel */}
+      {upcoming.length > 0 && (
+        <View className="pt-3 pb-1">
+          <Text className="font-display text-lg text-cream px-4 mb-2">YOUR UPCOMING GAMES</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4 }}
+          >
+            {upcoming.map((game) => (
+              <UpcomingGameCard
+                key={game.id}
+                game={game}
+                isHost={game.host_id === currentUser?.id}
+                onPress={() => router.push(`/games/${game.id}`)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      <View className="pt-3 pb-1">
+        <Text className="font-display text-lg text-cream px-4 mb-2">ALL GAMES</Text>
       </View>
 
       {/* Filter chips */}
@@ -151,15 +108,7 @@ export default function GamesScreen() {
           data={filtered}
           keyExtractor={(g) => g.id.toString()}
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 }}
-          renderItem={({ item }) => (
-            <GameCard
-              game={item}
-              onJoin={(id) => joinMutation.mutate(id)}
-              onLeave={(id) => leaveMutation.mutate(id)}
-              joining={joinMutation.isPending && joinMutation.variables === item.id}
-              leaving={leaveMutation.isPending && leaveMutation.variables === item.id}
-            />
-          )}
+          renderItem={({ item }) => <GameCard game={item} />}
           ListEmptyComponent={
             <View className="items-center pt-16 px-8">
               <Text className="text-muted font-sans text-center mb-3">

@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameForm';
-import { getCourts } from '@/api/courts';
 import { createGame } from '@/api/games';
+import { courtQueries, gameQueries } from '@/api/queries';
 import { Court } from '@/types';
 import { useLocationStore } from '@/store/locationStore';
 
@@ -18,16 +18,7 @@ export default function CreateGameScreen() {
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const { data: courts = [], isLoading: courtsLoading } = useQuery({
-    queryKey: ['courts', activeCity?.id],
-    queryFn: () =>
-      getCourts({
-        lat: activeCity?.lat,
-        lng: activeCity?.lng,
-        radius_km: activeCity?.radius_km ?? 30,
-      }),
-    enabled: !!activeCity,
-  });
+  const { data: courts = [], isLoading: courtsLoading } = useQuery(courtQueries.list(activeCity));
 
   const {
     control,
@@ -64,8 +55,8 @@ export default function CreateGameScreen() {
   const createMutation = useMutation({
     mutationFn: createGame,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['games'] });
-      router.replace('/(tabs)/games');
+      queryClient.invalidateQueries({ queryKey: gameQueries.myUpcoming().queryKey });
+      router.replace('/');
     },
     onError: () => setApiError('Failed to post game. Please try again.'),
   });

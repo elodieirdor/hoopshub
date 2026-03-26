@@ -19,7 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { CourtPin } from '@/components/courts/CourtPin';
 import { CourtCard } from '@/components/courts/CourtCard';
-import { getCourts } from '@/api/courts';
+import { courtQueries } from '@/api/queries';
 import { useAuthStore } from '@/store/authStore';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { Court } from '@/types';
@@ -62,16 +62,7 @@ export default function CourtsScreen() {
     isLoading: loading,
     isRefetching: refreshing,
     refetch,
-  } = useQuery({
-    queryKey: ['courts', activeCity?.id],
-    queryFn: () =>
-      getCourts({
-        lat: activeCity?.lat,
-        lng: activeCity?.lng,
-        radius_km: activeCity?.radius_km ?? 30,
-      }),
-    enabled: !!activeCity,
-  });
+  } = useQuery(courtQueries.list(activeCity));
 
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');

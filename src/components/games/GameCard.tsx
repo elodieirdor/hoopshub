@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Game } from '@/types';
@@ -20,33 +20,24 @@ function statusLabel(game: Game): { label: string; color: string } {
 
 interface GameCardProps {
   game: Game;
-  onJoin?: (id: number) => void;
-  onLeave?: (id: number) => void;
-  joining?: boolean;
-  leaving?: boolean;
 }
 
-export function GameCard({
-  game,
-  onJoin,
-  onLeave,
-  joining = false,
-  leaving = false,
-}: GameCardProps) {
+export function GameCard({ game }: GameCardProps) {
   const router = useRouter();
   const currentUserId = useAuthStore((s) => s.user?.id);
+
   const filled = game.game_players?.length ?? 0;
   const { label, color } = statusLabel(game);
-  const isFull = game.status === 'full' || filled >= game.max_players;
-  const isActive = game.status === 'open' || game.status === 'full';
   const hasJoined =
     !!currentUserId && (game.game_players ?? []).some((p) => p.player.id === currentUserId);
-  const showJoin = isActive;
 
   return (
     <Pressable
       onPress={() => router.push(`/games/${game.id}`)}
       className="bg-surface border border-border rounded-xl p-4 mb-3"
+      style={({ pressed }) =>
+        pressed && { backgroundColor: '#202020', borderColor: 'rgba(255,255,255,0.14)' }
+      }
     >
       {/* Host row */}
       <View className="flex-row items-center justify-between mb-2">
@@ -72,11 +63,23 @@ export function GameCard({
             </Text>
           ) : null}
         </View>
-        {/* Status badge */}
-        <View className="rounded-md px-2 py-[3px]" style={{ backgroundColor: color + '22' }}>
-          <Text className="text-xs font-sans" style={{ color }}>
-            {label}
-          </Text>
+        {/* Badges */}
+        <View className="flex-row items-center gap-2">
+          {hasJoined && (
+            <View
+              className="rounded-md px-2 py-[3px]"
+              style={{ backgroundColor: 'rgba(34,197,94,0.15)' }}
+            >
+              <Text className="text-xs font-sans" style={{ color: '#22C55E' }}>
+                Joined
+              </Text>
+            </View>
+          )}
+          <View className="rounded-md px-2 py-[3px]" style={{ backgroundColor: color + '22' }}>
+            <Text className="text-xs font-sans" style={{ color }}>
+              {label}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -109,45 +112,6 @@ export function GameCard({
 
       {/* Spots bar */}
       <PlayerSpots filled={filled} total={game.max_players} />
-
-      {/* Join / Leave button */}
-      {showJoin &&
-        (hasJoined ? (
-          <Pressable
-            onPress={() => !leaving && onLeave?.(game.id)}
-            disabled={leaving}
-            className="mt-3 rounded-lg py-2.5 items-center"
-            style={{
-              backgroundColor: 'rgba(255,255,255,0.06)',
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.08)',
-            }}
-          >
-            {leaving ? (
-              <ActivityIndicator size="small" color="#7A7870" />
-            ) : (
-              <Text className="font-sans font-semibold text-sm text-muted">Leave</Text>
-            )}
-          </Pressable>
-        ) : onJoin ? (
-          <Pressable
-            onPress={() => !isFull && !joining && onJoin(game.id)}
-            disabled={isFull || joining}
-            className="mt-3 rounded-lg py-2.5 items-center"
-            style={{ backgroundColor: isFull ? 'rgba(255,255,255,0.08)' : '#FF5C00' }}
-          >
-            {joining ? (
-              <ActivityIndicator size="small" color="#F0EDE8" />
-            ) : (
-              <Text
-                className="font-sans font-semibold text-sm"
-                style={{ color: isFull ? '#7A7870' : '#F0EDE8' }}
-              >
-                {isFull ? 'Full' : 'Join'}
-              </Text>
-            )}
-          </Pressable>
-        ) : null)}
     </Pressable>
   );
 }

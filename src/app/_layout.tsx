@@ -81,7 +81,6 @@ export default function RootLayout() {
             <Stack.Screen name="profile/password" options={{ headerShown: false }} />
             <Stack.Screen name="profile/settings" options={{ headerShown: false }} />
             <Stack.Screen name="users/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           </Stack>
           <StatusBar style="auto" />
         </ThemeProvider>

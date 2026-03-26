@@ -12,7 +12,11 @@ export function GameHistoryRow({ game }: { game: Game }) {
     <Pressable
       onPress={() => router.push(`/games/${game.id}`)}
       className="flex-row items-center py-3"
-      style={{ borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' }}
+      style={({ pressed }) => ({
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.06)',
+        opacity: pressed ? 0.6 : 1,
+      })}
     >
       <View className="flex-1">
         <Text className="text-cream font-sans font-semibold text-sm" numberOfLines={1}>
