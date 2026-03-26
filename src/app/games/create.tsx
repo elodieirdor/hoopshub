@@ -55,7 +55,6 @@ export default function CreateGameScreen() {
   const createMutation = useMutation({
     mutationFn: createGame,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: gameQueries.myUpcoming().queryKey });
       queryClient.invalidateQueries({ queryKey: ['games'] });
       router.replace('/');
     },

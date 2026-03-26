@@ -94,6 +94,7 @@ export interface GameInvitation {
   created_at: string;
   game: Game;
   inviter: User;
+  invitee?: User;
 }
 
 export interface ApiError {

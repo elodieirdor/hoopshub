@@ -22,7 +22,12 @@ import { useLocationStore } from '@/store/locationStore';
 
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: 1 },
+    mutations: { retry: 0 },
+  },
+});
 
 export const unstable_settings = {
   anchor: '(auth)',

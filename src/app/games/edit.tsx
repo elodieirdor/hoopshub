@@ -55,7 +55,6 @@ export default function EditGameScreen() {
   const updateMutation = useMutation({
     mutationFn: (data: Partial<typeof game>) => updateGame(Number(id), data!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: gameQueries.detail(id!).queryKey });
       queryClient.invalidateQueries({ queryKey: ['games'] });
       router.back();
     },

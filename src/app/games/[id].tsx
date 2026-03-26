@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, Image } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { joinGame, leaveGame, updateGame } from '@/api/games';
-import { gameQueries } from '@/api/queries';
+import { gameQueries, invitationQueries } from '@/api/queries';
 import { useAuthStore } from '@/store/authStore';
 import { BasketballCourtSVG } from '@/components/games/BasketballCourtSVG';
+import { InvitePlayerModal } from '@/components/games/InvitePlayerModal';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { initials, formatDate, formatDuration, SKILL_COLORS } from '@/utils/formatters';
 
@@ -17,13 +18,14 @@ export default function GameDetailScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
+  const [inviteModalVisible, setInviteModalVisible] = useState(false);
 
   const { data: game, isLoading: loading, error, refetch } = useQuery(gameQueries.detail(id!));
+  const { data: gameInvitations = [] } = useQuery(invitationQueries.forGame(Number(id)));
 
+  // Invalidate everything game-related in one call — the key hierarchy makes this safe.
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: gameQueries.detail(id!).queryKey });
     queryClient.invalidateQueries({ queryKey: ['games'] });
-    queryClient.invalidateQueries({ queryKey: gameQueries.myUpcoming().queryKey });
   };
 
   const joinMutation = useMutation({
@@ -41,9 +43,8 @@ export default function GameDetailScreen() {
   const cancelMutation = useMutation({
     mutationFn: () => updateGame(game!.id, { status: 'cancelled' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: gameQueries.detail(id!).queryKey });
-      queryClient.invalidateQueries({ queryKey: ['games'] });
-      queryClient.invalidateQueries({ queryKey: gameQueries.myUpcoming().queryKey });
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: invitationQueries.forGame(game!.id).queryKey });
       router.back();
     },
     onError: () => Alert.alert('Error', 'Could not cancel game. Please try again.'),
@@ -75,6 +76,10 @@ export default function GameDetailScreen() {
   const actionLoading =
     joinMutation.isPending || leaveMutation.isPending || cancelMutation.isPending;
   const skillColor = SKILL_COLORS[game.skill_level] ?? '#7A7870';
+  const isUpcoming = new Date(game.starts_at) > new Date();
+  const pendingInvitations = isHost
+    ? gameInvitations.filter((inv) => inv.status === 'pending')
+    : [];
 
   const handleLeave = () => {
     Alert.alert('Leave game', 'Are you sure you want to leave this game?', [
@@ -280,9 +285,36 @@ export default function GameDetailScreen() {
                 </Pressable>
               </View>
             ))}
+            {pendingInvitations.map((inv) => (
+              <View key={`inv-${inv.id}`}>
+                <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+                <View className="flex-row items-center gap-3 px-4 py-3" style={{ opacity: 0.55 }}>
+                  <View
+                    className="rounded-full items-center justify-center"
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderWidth: 1.5,
+                      borderColor: '#FF5C00',
+                      borderStyle: 'dashed',
+                    }}
+                  >
+                    <Text className="text-cream font-sans font-semibold text-xs">
+                      {initials(inv.invitee?.name ?? '?')}
+                    </Text>
+                  </View>
+                  <Text className="text-cream font-sans text-sm flex-1">
+                    {inv.invitee?.name ?? 'Unknown'}
+                  </Text>
+                  <Text style={{ color: '#FF5C00', fontFamily: 'DMSans', fontSize: 11 }}>
+                    Invited
+                  </Text>
+                </View>
+              </View>
+            ))}
             {Array.from({ length: emptySlots }).map((_, i) => (
               <View key={`empty-${i}`}>
-                {(i > 0 || confirmedPlayers.length > 0) && (
+                {(i > 0 || confirmedPlayers.length > 0 || pendingInvitations.length > 0) && (
                   <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
                 )}
                 <View className="flex-row items-center gap-3 px-4 py-3">
@@ -301,6 +333,37 @@ export default function GameDetailScreen() {
             ))}
           </View>
 
+          {/* Invite button — host only, not full, active, upcoming */}
+          {isHost && !isFull && isActive && isUpcoming && (
+            <Pressable
+              onPress={() => setInviteModalVisible(true)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                padding: 10,
+                borderRadius: 10,
+                borderWidth: 0.5,
+                borderColor: 'rgba(255,92,0,0.3)',
+                backgroundColor: 'rgba(255,92,0,0.08)',
+                marginTop: 12,
+                marginBottom: 20,
+              }}
+            >
+              <Ionicons name="person-add-outline" size={16} color="#FF5C00" />
+              <Text
+                style={{
+                  color: '#FF5C00',
+                  fontSize: 13,
+                  fontFamily: 'DMSans',
+                  fontWeight: '600',
+                }}
+              >
+                Invite a player
+              </Text>
+            </Pressable>
+          )}
+
           {/* Description */}
           {game.description ? (
             <View>
@@ -310,6 +373,15 @@ export default function GameDetailScreen() {
           ) : null}
         </View>
       </ScrollView>
+
+      <InvitePlayerModal
+        gameId={game.id}
+        visible={inviteModalVisible}
+        onClose={() => setInviteModalVisible(false)}
+        onInvited={() => {
+          queryClient.invalidateQueries({ queryKey: invitationQueries.forGame(game.id).queryKey });
+        }}
+      />
 
       {/* Bottom action bar */}
       <View

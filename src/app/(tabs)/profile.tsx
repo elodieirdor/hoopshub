@@ -3,17 +3,37 @@ import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'rea
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { GameHistoryRow } from '@/components/games/GameHistoryRow';
 import { ProfileIdentity } from '@/components/profile/ProfileIdentity';
 import { ProfileStats } from '@/components/profile/ProfileStats';
 import { ProfileRepSection } from '@/components/profile/ProfileRepSection';
+import { InvitationsInbox } from '@/components/invitations/InvitationsInbox';
+import { invitationQueries, gameQueries } from '@/api/queries';
+import { respondToInvitation } from '@/api/invitations';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const [menuOpen, setMenuOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: invitations = [] } = useQuery(invitationQueries.myPending());
+
+  const respondMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: 'accepted' | 'declined' }) =>
+      respondToInvitation(id, status),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: invitationQueries.myPending().queryKey });
+      if (variables.status === 'accepted') {
+        // Accepting joins the game server-side — bust all game queries so
+        // upcoming games and feed reflect the new player counts.
+        queryClient.invalidateQueries({ queryKey: ['games'] });
+      }
+    },
+  });
 
   if (!user) {
     return (
@@ -50,6 +70,11 @@ export default function ProfileScreen() {
         //   <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />
         // }
       >
+        <InvitationsInbox
+          invitations={invitations}
+          onRespond={(id, status) => respondMutation.mutate({ id, status })}
+        />
+
         <ProfileIdentity user={user} />
 
         <View
