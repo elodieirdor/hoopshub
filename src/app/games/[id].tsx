@@ -20,8 +20,11 @@ export default function GameDetailScreen() {
 
   const { data: game, isLoading: loading, error, refetch } = useQuery(gameQueries.detail(id!));
 
-  const invalidate = () =>
+  const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: gameQueries.detail(id!).queryKey });
+    queryClient.invalidateQueries({ queryKey: ['games'] });
+    queryClient.invalidateQueries({ queryKey: gameQueries.myUpcoming().queryKey });
+  };
 
   const joinMutation = useMutation({
     mutationFn: () => joinGame(game!.id),
@@ -37,7 +40,12 @@ export default function GameDetailScreen() {
 
   const cancelMutation = useMutation({
     mutationFn: () => updateGame(game!.id, { status: 'cancelled' }),
-    onSuccess: () => router.back(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: gameQueries.detail(id!).queryKey });
+      queryClient.invalidateQueries({ queryKey: ['games'] });
+      queryClient.invalidateQueries({ queryKey: gameQueries.myUpcoming().queryKey });
+      router.back();
+    },
     onError: () => Alert.alert('Error', 'Could not cancel game. Please try again.'),
   });
 

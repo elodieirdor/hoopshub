@@ -56,6 +56,7 @@ export default function CreateGameScreen() {
     mutationFn: createGame,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: gameQueries.myUpcoming().queryKey });
+      queryClient.invalidateQueries({ queryKey: ['games'] });
       router.replace('/');
     },
     onError: () => setApiError('Failed to post game. Please try again.'),

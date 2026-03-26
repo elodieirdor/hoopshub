@@ -56,6 +56,7 @@ export default function EditGameScreen() {
     mutationFn: (data: Partial<typeof game>) => updateGame(Number(id), data!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: gameQueries.detail(id!).queryKey });
+      queryClient.invalidateQueries({ queryKey: ['games'] });
       router.back();
     },
     onError: () => setApiError('Failed to save changes. Please try again.'),

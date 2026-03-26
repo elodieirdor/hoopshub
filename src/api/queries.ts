@@ -54,11 +54,13 @@ export const gameQueries = {
       queryKey: ['games', { court_id: courtId }] as const,
       queryFn: () => getCourtGames(courtId),
       enabled: !!courtId,
+      staleTime: 2 * 60 * 1000,
     }),
   myUpcoming: () =>
     queryOptions({
       queryKey: ['my-games', 'upcoming'] as const,
       queryFn: () => getMyGames('upcoming'),
+      staleTime: 2 * 60 * 1000,
     }),
 };
 
