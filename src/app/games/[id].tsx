@@ -24,10 +24,12 @@ export default function GameDetailScreen() {
 
   const isPlayerInGame =
     !!game && !!currentUser && game.game_players?.some((p) => p.player_id === currentUser.id);
+  const isGameFull =
+    !!game && (game.game_players?.length >= game.max_players || game.status === 'full');
 
   const { data: gameInvitations = [] } = useQuery({
     ...invitationQueries.forGame(Number(id)),
-    enabled: isPlayerInGame,
+    enabled: isPlayerInGame && !isGameFull,
   });
 
   // Invalidate everything game-related in one call — the key hierarchy makes this safe.
