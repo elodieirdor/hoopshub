@@ -1,10 +1,8 @@
 import { queryOptions } from '@tanstack/react-query';
 import { getCourts, getCourt } from './courts';
-import { getGames, getGame, getMyGames, getCourtGames } from './games';
+import { getGames, getGame, getMyGames, getCourtGames, GetGamesParams } from './games';
 import { getUser } from './users';
 import { City } from '@/types';
-
-type GetGamesParams = Parameters<typeof getGames>[0];
 
 export const courtQueries = {
   list: (city: City | null | undefined) =>

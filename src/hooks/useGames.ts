@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { getGames } from '@/api/games';
+import { GetGamesParams } from '@/api/games';
 import { gameQueries } from '@/api/queries';
-
-type GetGamesParams = Parameters<typeof getGames>[0];
 
 export function useGames(params?: GetGamesParams) {
   const {

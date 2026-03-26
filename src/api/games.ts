@@ -1,19 +1,21 @@
 import client from './client';
 import { Game } from '@/types';
 
-export const getCourtGames = async (id: number) => {
-  const res = await client.get<Game[]>(`/courts/${id}/games`);
-  return res.data;
-};
-
-// todo use type here
-export const getGames = async (params?: {
+export type GetGamesParams = {
   lat?: number;
   lng?: number;
   radius_km?: number;
   skill_level?: string;
   status?: string;
-}) => {
+  court_id?: number;
+};
+
+export const getCourtGames = async (id: number) => {
+  const res = await client.get<Game[]>(`/courts/${id}/games`);
+  return res.data;
+};
+
+export const getGames = async (params?: GetGamesParams) => {
   const res = await client.get<Game[]>('/games', { params });
   return res.data;
 };
