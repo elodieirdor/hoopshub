@@ -1,36 +1,32 @@
 import React, { useMemo } from 'react';
-import { ScrollView, Linking, View, Text, Pressable, Image } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getCourt } from '@/api/courts';
-import { getGames, joinGame, leaveGame } from '@/api/games';
+import { getCourtGames } from '@/api/games';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
-import { Game } from '@/types';
-import { useAuthStore } from '@/store/authStore';
 import { GameCard } from '@/components/games/GameCard';
 import { Badge } from '@/components/ui/Badge';
 
 export default function CourtDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const courtId = Number(id);
-  const currentUser = useAuthStore((s) => s.user);
-  const queryClient = useQueryClient();
   const router = useRouter();
 
   const { data: court, isLoading } = useQuery({
-    queryKey: ['court', id],
+    queryKey: ['court', courtId],
     queryFn: () => getCourt(courtId),
-    enabled: !!id,
+    enabled: !!courtId,
   });
 
   const GAMES_KEY = ['games', { court_id: courtId }];
 
   const { data: allGames = [] } = useQuery({
     queryKey: GAMES_KEY,
-    queryFn: () => getGames({ court_id: courtId }),
-    enabled: !!id,
+    queryFn: () => getCourtGames(courtId),
+    enabled: !!courtId,
   });
 
   const games = useMemo(
@@ -40,62 +36,6 @@ export default function CourtDetailScreen() {
       ),
     [allGames],
   );
-
-  const joinMutation = useMutation({
-    mutationFn: (gameId: number) => joinGame(gameId),
-    onMutate: async (gameId) => {
-      await queryClient.cancelQueries({ queryKey: GAMES_KEY });
-      const prev = queryClient.getQueryData<Game[]>(GAMES_KEY);
-      queryClient.setQueryData<Game[]>(GAMES_KEY, (old = []) =>
-        old.map((g) => {
-          if (g.id !== gameId) return g;
-          const newFilled = (g.game_players?.length ?? 0) + 1;
-          return {
-            ...g,
-            game_players: [
-              ...(g.game_players ?? []),
-              {
-                id: -1,
-                game_id: gameId,
-                player_id: currentUser?.id ?? -1,
-                joined_at: new Date().toISOString(),
-                player: currentUser!,
-              },
-            ],
-            status: newFilled >= g.max_players ? ('full' as const) : g.status,
-          };
-        }),
-      );
-      return { prev };
-    },
-    onError: (_, __, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(GAMES_KEY, ctx.prev);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
-  });
-
-  const leaveMutation = useMutation({
-    mutationFn: (gameId: number) => leaveGame(gameId),
-    onMutate: async (gameId) => {
-      await queryClient.cancelQueries({ queryKey: GAMES_KEY });
-      const prev = queryClient.getQueryData<Game[]>(GAMES_KEY);
-      queryClient.setQueryData<Game[]>(GAMES_KEY, (old = []) =>
-        old.map((g) => {
-          if (g.id !== gameId) return g;
-          return {
-            ...g,
-            game_players: (g.game_players ?? []).filter((p) => p.player.id !== currentUser?.id),
-            status: 'open' as const,
-          };
-        }),
-      );
-      return { prev };
-    },
-    onError: (_, __, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(GAMES_KEY, ctx.prev);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
-  });
 
   const openDirections = () => {
     if (!court) return;
@@ -186,16 +126,7 @@ export default function CourtDetailScreen() {
           {games.length === 0 ? (
             <Text className="text-muted font-sans text-sm">No upcoming games.</Text>
           ) : (
-            games.map((g) => (
-              <GameCard
-                key={g.id}
-                game={g}
-                onJoin={(gameId) => joinMutation.mutate(gameId)}
-                onLeave={(gameId) => leaveMutation.mutate(gameId)}
-                joining={joinMutation.isPending && joinMutation.variables === g.id}
-                leaving={leaveMutation.isPending && leaveMutation.variables === g.id}
-              />
-            ))
+            games.map((g) => <GameCard key={g.id} game={g} />)
           )}
 
           <Pressable

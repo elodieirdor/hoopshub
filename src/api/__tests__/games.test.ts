@@ -1,4 +1,4 @@
-import { getGames, joinGame, leaveGame, deleteGame } from '../games';
+import { getGames, joinGame, leaveGame, deleteGame, getMyGames } from '../games';
 import client from '../client';
 import { makeGame, makeCourt, makeUser } from '@/test/factories';
 
@@ -71,5 +71,24 @@ describe('deleteGame', () => {
     await deleteGame(42);
 
     expect(mockedClient.delete).toHaveBeenCalledWith('/games/42');
+  });
+});
+
+describe('getMyGames', () => {
+  it('defaults to upcoming', async () => {
+    mockedClient.get = jest.fn().mockResolvedValue({ data: [mockGame] });
+
+    const result = await getMyGames();
+
+    expect(mockedClient.get).toHaveBeenCalledWith('/users/me/games', { params: { type: 'upcoming' } });
+    expect(result).toEqual([mockGame]);
+  });
+
+  it('passes past type', async () => {
+    mockedClient.get = jest.fn().mockResolvedValue({ data: [] });
+
+    await getMyGames('past');
+
+    expect(mockedClient.get).toHaveBeenCalledWith('/users/me/games', { params: { type: 'past' } });
   });
 });
