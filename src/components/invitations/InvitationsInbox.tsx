@@ -1,14 +1,16 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { GameInvitation } from '@/types';
 import { formatDate } from '@/utils/formatters';
 
 interface Props {
   invitations: GameInvitation[];
-  onRespond: (id: number, status: 'accepted' | 'declined') => void;
+  onRespond: (gameId: number, id: number, status: 'accepted' | 'declined') => void;
 }
 
 export function InvitationsInbox({ invitations, onRespond }: Props) {
+  const router = useRouter();
   if (invitations.length === 0) return null;
 
   return (
@@ -28,29 +30,34 @@ export function InvitationsInbox({ invitations, onRespond }: Props) {
               padding: 14,
             }}
           >
-            <Text
-              style={{
-                fontFamily: 'BebasNeue_400Regular',
-                fontSize: 16,
-                color: '#F0EDE8',
-                marginBottom: 2,
-              }}
-              numberOfLines={1}
+            <Pressable
+              onPress={() => router.push(`/games/${inv.game_id}`)}
+              style={({ pressed }) => ({ marginBottom: 12, opacity: pressed ? 0.6 : 1 })}
             >
-              {inv.game.title}
-            </Text>
-            <Text style={{ fontFamily: 'DMSans', fontSize: 12, color: '#7A7870', marginBottom: 1 }}>
-              {inv.game.court?.name ?? '—'} · {formatDate(inv.game.starts_at)}
-            </Text>
-            <Text
-              style={{ fontFamily: 'DMSans', fontSize: 12, color: '#7A7870', marginBottom: 12 }}
-            >
-              Invited by {inv.inviter.name}
-            </Text>
+              <Text
+                style={{
+                  fontFamily: 'BebasNeue_400Regular',
+                  fontSize: 16,
+                  color: '#F0EDE8',
+                  marginBottom: 2,
+                }}
+                numberOfLines={1}
+              >
+                {inv.game.title}
+              </Text>
+              <Text
+                style={{ fontFamily: 'DMSans', fontSize: 12, color: '#7A7870', marginBottom: 1 }}
+              >
+                {inv.game.court?.name ?? '—'} · {formatDate(inv.game.starts_at)}
+              </Text>
+              <Text style={{ fontFamily: 'DMSans', fontSize: 12, color: '#7A7870' }}>
+                Invited by {inv.inviter.name}
+              </Text>
+            </Pressable>
 
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable
-                onPress={() => onRespond(inv.id, 'declined')}
+                onPress={() => onRespond(inv.game_id, inv.id, 'declined')}
                 style={{
                   flex: 1,
                   borderRadius: 8,
@@ -65,7 +72,7 @@ export function InvitationsInbox({ invitations, onRespond }: Props) {
                 </Text>
               </Pressable>
               <Pressable
-                onPress={() => onRespond(inv.id, 'accepted')}
+                onPress={() => onRespond(inv.game_id, inv.id, 'accepted')}
                 style={{
                   flex: 1,
                   borderRadius: 8,

@@ -12,10 +12,11 @@ export const sendInvitation = async (gameId: number, inviteeId: number) => {
 };
 
 export const respondToInvitation = async (
+  gameId: number,
   invitationId: number,
   status: 'accepted' | 'declined',
 ) => {
-  const res = await client.patch(`/invitations/${invitationId}`, { status });
+  const res = await client.patch(`/games/${gameId}/invitations/${invitationId}`, { status });
   return res.data;
 };
 

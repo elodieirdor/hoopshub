@@ -50,9 +50,11 @@ describe('respondToInvitation', () => {
     const accepted = { ...mockInvitation, status: 'accepted' as const };
     mockedClient.patch = jest.fn().mockResolvedValue({ data: accepted });
 
-    const result = await respondToInvitation(1, 'accepted');
+    const result = await respondToInvitation(10, 1, 'accepted');
 
-    expect(mockedClient.patch).toHaveBeenCalledWith('/invitations/1', { status: 'accepted' });
+    expect(mockedClient.patch).toHaveBeenCalledWith('/games/10/invitations/1', {
+      status: 'accepted',
+    });
     expect(result).toEqual(accepted);
   });
 
@@ -60,8 +62,10 @@ describe('respondToInvitation', () => {
     const declined = { ...mockInvitation, status: 'declined' as const };
     mockedClient.patch = jest.fn().mockResolvedValue({ data: declined });
 
-    await respondToInvitation(1, 'declined');
+    await respondToInvitation(10, 1, 'declined');
 
-    expect(mockedClient.patch).toHaveBeenCalledWith('/invitations/1', { status: 'declined' });
+    expect(mockedClient.patch).toHaveBeenCalledWith('/games/10/invitations/1', {
+      status: 'declined',
+    });
   });
 });

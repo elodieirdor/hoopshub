@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,8 +23,15 @@ export default function ProfileScreen() {
   const { data: invitations = [] } = useQuery(invitationQueries.myPending());
 
   const respondMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: 'accepted' | 'declined' }) =>
-      respondToInvitation(id, status),
+    mutationFn: ({
+      gameId,
+      id,
+      status,
+    }: {
+      gameId: number;
+      id: number;
+      status: 'accepted' | 'declined';
+    }) => respondToInvitation(gameId, id, status),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: invitationQueries.myPending().queryKey });
       if (variables.status === 'accepted') {
@@ -33,6 +40,7 @@ export default function ProfileScreen() {
         queryClient.invalidateQueries({ queryKey: ['games'] });
       }
     },
+    onError: () => Alert.alert('Error', 'Could not respond to invitation. Please try again.'),
   });
 
   if (!user) {
@@ -72,7 +80,7 @@ export default function ProfileScreen() {
       >
         <InvitationsInbox
           invitations={invitations}
-          onRespond={(id, status) => respondMutation.mutate({ id, status })}
+          onRespond={(gameId, id, status) => respondMutation.mutate({ gameId, id, status })}
         />
 
         <ProfileIdentity user={user} />

@@ -21,7 +21,14 @@ export default function GameDetailScreen() {
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
 
   const { data: game, isLoading: loading, error, refetch } = useQuery(gameQueries.detail(id!));
-  const { data: gameInvitations = [] } = useQuery(invitationQueries.forGame(Number(id)));
+
+  const isPlayerInGame =
+    !!game && !!currentUser && game.game_players?.some((p) => p.player_id === currentUser.id);
+
+  const { data: gameInvitations = [] } = useQuery({
+    ...invitationQueries.forGame(Number(id)),
+    enabled: isPlayerInGame,
+  });
 
   // Invalidate everything game-related in one call — the key hierarchy makes this safe.
   const invalidate = () => {
@@ -68,7 +75,6 @@ export default function GameDetailScreen() {
 
   const confirmedPlayers = game.game_players ?? [];
   const filled = confirmedPlayers.length;
-  const emptySlots = Math.max(0, game.max_players - filled);
   const isHost = currentUser?.id === game.host_id;
   const hasJoined = !isHost && confirmedPlayers.some((p) => p.player_id === currentUser?.id);
   const isActive = game.status === 'open' || game.status === 'full';
@@ -77,9 +83,10 @@ export default function GameDetailScreen() {
     joinMutation.isPending || leaveMutation.isPending || cancelMutation.isPending;
   const skillColor = SKILL_COLORS[game.skill_level] ?? '#7A7870';
   const isUpcoming = new Date(game.starts_at) > new Date();
-  const pendingInvitations = isHost
+  const pendingInvitations = isPlayerInGame
     ? gameInvitations.filter((inv) => inv.status === 'pending')
     : [];
+  const emptySlots = Math.max(0, game.max_players - filled - pendingInvitations.length);
 
   const handleLeave = () => {
     Alert.alert('Leave game', 'Are you sure you want to leave this game?', [
@@ -333,8 +340,8 @@ export default function GameDetailScreen() {
             ))}
           </View>
 
-          {/* Invite button — host only, not full, active, upcoming */}
-          {isHost && !isFull && isActive && isUpcoming && (
+          {/* Invite button — any player in the game, open slots remaining, active, upcoming */}
+          {isPlayerInGame && emptySlots > 0 && isActive && isUpcoming && (
             <Pressable
               onPress={() => setInviteModalVisible(true)}
               style={{
