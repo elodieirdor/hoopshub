@@ -8,6 +8,13 @@ jest.mock('../api/auth');
 jest.mock('../utils/storage');
 jest.mock('expo-router', () => ({ router: { replace: jest.fn() } }));
 
+const mockSyncCityWithUser = jest.fn();
+jest.mock('./locationStore', () => ({
+  useLocationStore: {
+    getState: () => ({ syncCityWithUser: mockSyncCityWithUser }),
+  },
+}));
+
 const mockedAuthApi = jest.mocked(authApi);
 const mockedStorage = storage as jest.Mocked<typeof storage>;
 const mockedRouter = router as jest.Mocked<typeof router>;
@@ -17,6 +24,7 @@ const mockUser = makeCurrentUser({ email: 'test@example.com' });
 beforeEach(() => {
   jest.clearAllMocks();
   useAuthStore.setState({ user: null, token: null, isLoading: true, isAuthenticated: false });
+  mockSyncCityWithUser.mockResolvedValue(undefined);
 });
 
 describe('loadUser', () => {
@@ -42,6 +50,7 @@ describe('loadUser', () => {
     expect(state.token).toBe('tok_abc');
     expect(state.user).toEqual(mockUser);
     expect(state.isLoading).toBe(false);
+    expect(mockSyncCityWithUser).toHaveBeenCalledWith(mockUser.city);
   });
 
   it('clears the token and sets isLoading false when /me throws', async () => {
@@ -68,6 +77,7 @@ describe('login', () => {
     expect(state.token).toBe('tok_123');
     expect(state.user).toEqual(mockUser);
     expect(state.isAuthenticated).toBe(true);
+    expect(mockSyncCityWithUser).toHaveBeenCalledWith(mockUser.city);
   });
 
   it('propagates errors without changing state', async () => {

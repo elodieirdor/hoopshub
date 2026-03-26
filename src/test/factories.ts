@@ -1,4 +1,14 @@
-import { User, CurrentUser, Court, Game, GameInvitation } from '@/types';
+import { User, CurrentUser, Court, Game, GameInvitation, City } from '@/types';
+
+export const makeCity = (overrides: Partial<City> = {}): City => ({
+  id: 1,
+  name: 'Christchurch',
+  slug: 'christchurch',
+  lat: -43.5321,
+  lng: 172.6362,
+  radius_km: 30,
+  ...overrides,
+});
 
 export const makeUser = (overrides: Partial<User> = {}): User => ({
   id: 1,

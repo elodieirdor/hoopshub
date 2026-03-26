@@ -3,6 +3,7 @@ import * as AuthApi from '../api/auth';
 import { router } from 'expo-router';
 import { User } from '@/types';
 import { storage } from '@/utils/storage';
+import { useLocationStore } from './locationStore';
 
 interface AuthState {
   user: User | null;
@@ -31,6 +32,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
       const user = await AuthApi.me();
       set({ user, token, isAuthenticated: true, isLoading: false });
+      useLocationStore.getState().syncCityWithUser(user.city);
     } catch {
       await storage.delete('auth_token');
       set({ isLoading: false });
@@ -41,12 +43,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { token, user } = await AuthApi.login({ email, password });
     await storage.set('auth_token', token);
     set({ user, token, isAuthenticated: true });
+    useLocationStore.getState().syncCityWithUser(user.city);
   },
 
   register: async (data) => {
     const { token, user } = await AuthApi.register(data);
     await storage.set('auth_token', token);
     set({ user, token, isAuthenticated: true });
+    useLocationStore.getState().syncCityWithUser(user.city);
   },
 
   setUser: (user) => set({ user }),

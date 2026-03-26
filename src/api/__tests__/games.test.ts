@@ -32,13 +32,13 @@ describe('getGames', () => {
     expect(mockedClient.get).toHaveBeenCalledWith('/games', { params: { court_id: 1 } });
   });
 
-  it('passes city and skill_level params', async () => {
+  it('passes lat/lng and skill_level params', async () => {
     mockedClient.get = jest.fn().mockResolvedValue({ data: [] });
 
-    await getGames({ city: 'Christchurch', skill_level: 'beginner' });
+    await getGames({ lat: -43.5321, lng: 172.6362, skill_level: 'beginner' });
 
     expect(mockedClient.get).toHaveBeenCalledWith('/games', {
-      params: { city: 'Christchurch', skill_level: 'beginner' },
+      params: { lat: -43.5321, lng: 172.6362, skill_level: 'beginner' },
     });
   });
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, Image, ActivityIndicator, Alert } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import * as ImagePicker from 'expo-image-picker';
@@ -12,8 +12,10 @@ import { useAuthStore } from '@/store/authStore';
 import { FormInput } from '@/components/ui/form-input';
 import { updateMe, uploadAvatar } from '@/api/users';
 import { initials } from '@/utils/formatters';
-import { User } from '@/types';
-import { SKILL_LEVELS, SKILL_LEVEL_VALUES, POSITION_VALUES } from '@/constants/game';
+import { City, User } from '@/types';
+import { POSITION_VALUES, SKILL_LEVEL_VALUES, SKILL_LEVELS } from '@/constants/game';
+import { CityPicker } from '@/components/ui/CityPicker';
+import { useLocationStore } from '@/store/locationStore';
 
 const schema = z.object({
   name: z.string().min(2, 'At least 2 characters'),
@@ -29,6 +31,7 @@ export default function EditProfileScreen() {
   const { top } = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user)!;
   const setUser = useAuthStore((s) => s.setUser);
+  const { setActiveCity, cities } = useLocationStore();
 
   const [pendingAvatarUri, setPendingAvatarUri] = useState<string | null>(null);
 
@@ -57,6 +60,10 @@ export default function EditProfileScreen() {
     },
     onSuccess: (updatedUser) => {
       setUser(updatedUser);
+      if (updatedUser.city) {
+        const city = cities.find((c) => c.name === updatedUser.city);
+        if (city) setActiveCity(city);
+      }
       router.back();
     },
     onError: () => {
@@ -169,15 +176,11 @@ export default function EditProfileScreen() {
           <Controller
             control={control}
             name="city"
-            render={({ field: { value, onChange, onBlur } }) => (
-              <FormInput
-                label="City"
+            render={({ field: { value, onChange } }) => (
+              <CityPicker
+                variant="row"
                 value={value ?? ''}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Christchurch"
-                autoCapitalize="words"
-                error={errors.city?.message}
+                onChange={(city: City) => onChange(city.name)}
               />
             )}
           />

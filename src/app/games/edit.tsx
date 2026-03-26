@@ -8,11 +8,13 @@ import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameF
 import { getCourts } from '@/api/courts';
 import { getGame, updateGame } from '@/api/games';
 import { Court } from '@/types';
+import { useLocationStore } from '@/store/locationStore';
 
 export default function EditGameScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { activeCity } = useLocationStore();
 
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -24,8 +26,14 @@ export default function EditGameScreen() {
   });
 
   const { data: courts = [], isLoading: courtsLoading } = useQuery({
-    queryKey: ['courts', { city: 'Christchurch' }],
-    queryFn: () => getCourts({ city: 'Christchurch' }),
+    queryKey: ['courts', activeCity?.id],
+    queryFn: () =>
+      getCourts({
+        lat: activeCity?.lat,
+        lng: activeCity?.lng,
+        radius_km: activeCity?.radius_km ?? 30,
+      }),
+    enabled: !!activeCity,
   });
 
   const {

@@ -1,19 +1,9 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  RefreshControl,
-  ActivityIndicator,
-  Modal,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
-import { getGames } from '@/api/games';
 import { GameHistoryRow } from '@/components/games/GameHistoryRow';
 import { ProfileIdentity } from '@/components/profile/ProfileIdentity';
 import { ProfileStats } from '@/components/profile/ProfileStats';
@@ -24,23 +14,6 @@ export default function ProfileScreen() {
   const { top, bottom } = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const {
-    data: recentGames = [],
-    isLoading,
-    refetch,
-    isRefetching,
-  } = useQuery({
-    queryKey: ['games', 'mine', user?.id, user?.city],
-    queryFn: async () => {
-      const all = await getGames({ city: user?.city ?? 'Christchurch' });
-      return all
-        .filter((g) => g.game_players?.some((p) => p.player_id === user!.id))
-        .slice(-5)
-        .reverse();
-    },
-    enabled: !!user,
-  });
 
   if (!user) {
     return (
@@ -73,9 +46,9 @@ export default function ProfileScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: bottom + 32 }}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />
-        }
+        // refreshControl={
+        //   <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />
+        // }
       >
         <ProfileIdentity user={user} />
 
@@ -105,9 +78,7 @@ export default function ProfileScreen() {
 
         <View className="px-4 pt-2 pb-6">
           <Text className="font-display text-2xl text-cream mb-4">RECENT GAMES</Text>
-          {isLoading ? (
-            <ActivityIndicator color="#FF5C00" style={{ marginTop: 8 }} />
-          ) : recentGames.length === 0 ? (
+          {user.recent_games.length === 0 ? (
             <View className="items-center py-8">
               <Ionicons name="basketball-outline" size={32} color="#7A7870" />
               <Text className="text-muted font-sans text-sm mt-3 text-center">
@@ -115,7 +86,7 @@ export default function ProfileScreen() {
               </Text>
             </View>
           ) : (
-            recentGames.map((game) => <GameHistoryRow key={game.id} game={game} />)
+            user.recent_games.map((game) => <GameHistoryRow key={game.id} game={game} />)
           )}
         </View>
       </ScrollView>

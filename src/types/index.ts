@@ -1,3 +1,12 @@
+export interface City {
+  id: number;
+  name: string;
+  slug: string;
+  lat: number;
+  lng: number;
+  radius_km: number;
+}
+
 export interface User {
   id: number;
   name: string;
