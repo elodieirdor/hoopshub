@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { joinGame, leaveGame, updateGame } from '@/api/games';
+import { respondToInvitation } from '@/api/invitations';
 import { gameQueries, invitationQueries } from '@/api/queries';
 import { useAuthStore } from '@/store/authStore';
 import { BasketballCourtSVG } from '@/components/games/BasketballCourtSVG';
@@ -32,6 +33,9 @@ export default function GameDetailScreen() {
     enabled: isPlayerInGame && !isGameFull,
   });
 
+  const { data: myInvitations = [] } = useQuery(invitationQueries.myPending());
+  const myInvitation = myInvitations.find((inv) => inv.game_id === Number(id)) ?? null;
+
   // Invalidate everything game-related in one call — the key hierarchy makes this safe.
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['games'] });
@@ -47,6 +51,18 @@ export default function GameDetailScreen() {
     mutationFn: () => leaveGame(game!.id),
     onSuccess: invalidate,
     onError: () => Alert.alert('Error', 'Could not leave game. Please try again.'),
+  });
+
+  const respondMutation = useMutation({
+    mutationFn: (status: 'accepted' | 'declined') =>
+      respondToInvitation(Number(id), myInvitation!.id, status),
+    onSuccess: (_data, status) => {
+      queryClient.invalidateQueries({ queryKey: invitationQueries.myPending().queryKey });
+      if (status === 'accepted') {
+        invalidate();
+      }
+    },
+    onError: () => Alert.alert('Error', 'Could not respond to invitation. Please try again.'),
   });
 
   const cancelMutation = useMutation({
@@ -82,7 +98,10 @@ export default function GameDetailScreen() {
   const isActive = game.status === 'open' || game.status === 'full';
   const isFull = filled >= game.max_players || game.status === 'full';
   const actionLoading =
-    joinMutation.isPending || leaveMutation.isPending || cancelMutation.isPending;
+    joinMutation.isPending ||
+    leaveMutation.isPending ||
+    cancelMutation.isPending ||
+    respondMutation.isPending;
   const skillColor = SKILL_COLORS[game.skill_level] ?? '#7A7870';
   const isUpcoming = new Date(game.starts_at) > new Date();
   const pendingInvitations = isPlayerInGame
@@ -427,6 +446,44 @@ export default function GameDetailScreen() {
             <Text className="font-sans font-semibold text-base text-muted">
               {game.status === 'completed' ? 'Game completed' : 'Game cancelled'}
             </Text>
+          </View>
+        ) : myInvitation ? (
+          <View style={{ gap: 8 }}>
+            <Text className="text-muted font-sans text-xs text-center">
+              Invited by {myInvitation.inviter.name}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Pressable
+                onPress={() => respondMutation.mutate('declined')}
+                disabled={actionLoading}
+                className="flex-1 rounded-xl py-4 items-center"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.08)',
+                }}
+              >
+                {respondMutation.isPending && respondMutation.variables === 'declined' ? (
+                  <ActivityIndicator size="small" color="#7A7870" />
+                ) : (
+                  <Text className="font-sans font-semibold text-base text-muted">Decline</Text>
+                )}
+              </Pressable>
+              <Pressable
+                onPress={() => respondMutation.mutate('accepted')}
+                disabled={actionLoading}
+                className="flex-1 rounded-xl py-4 items-center"
+                style={{ backgroundColor: '#FF5C00' }}
+              >
+                {respondMutation.isPending && respondMutation.variables === 'accepted' ? (
+                  <ActivityIndicator size="small" color="#F0EDE8" />
+                ) : (
+                  <Text className="font-sans font-semibold text-base" style={{ color: '#F0EDE8' }}>
+                    Accept
+                  </Text>
+                )}
+              </Pressable>
+            </View>
           </View>
         ) : hasJoined ? (
           <Pressable
