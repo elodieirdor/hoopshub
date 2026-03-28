@@ -1,37 +1,88 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { GameInvitation } from '@/types';
 import { formatDate } from '@/utils/formatters';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { invitationQueries } from '@/api/queries';
+import { respondToInvitation } from '@/api/invitations';
+import { GameInvitation } from '@/types';
 
-interface Props {
-  invitations: GameInvitation[];
-  onRespond: (gameId: number, id: number, status: 'accepted' | 'declined') => void;
-}
-
-export function InvitationsInbox({ invitations, onRespond }: Props) {
+export function InvitationsInbox() {
   const router = useRouter();
-  if (invitations.length === 0) return null;
+  const queryClient = useQueryClient();
+
+  const { data: invitations = [] } = useQuery(invitationQueries.myPending());
+
+  const respondMutation = useMutation({
+    mutationFn: ({
+      invitation,
+      status,
+    }: {
+      invitation: GameInvitation;
+      status: 'accepted' | 'declined';
+    }) => respondToInvitation(invitation.game_id, invitation.id, status),
+    onMutate: async ({ invitation }) => {
+      await queryClient.cancelQueries({ queryKey: invitationQueries.myPending().queryKey });
+      const previous = queryClient.getQueryData<GameInvitation[]>(
+        invitationQueries.myPending().queryKey,
+      );
+      queryClient.setQueryData<GameInvitation[]>(
+        invitationQueries.myPending().queryKey,
+        (old = []) => old.filter((inv) => inv.id !== invitation.id),
+      );
+      return { previous };
+    },
+    onSuccess: (_data, variables) => {
+      if (variables.status === 'accepted') {
+        queryClient.invalidateQueries({ queryKey: ['games'] });
+      }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(invitationQueries.myPending().queryKey, context.previous);
+      }
+      Alert.alert('Error', 'Could not respond to invitation. Please try again.');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: invitationQueries.myPending().queryKey });
+    },
+  });
+
+  if (invitations.length === 0) {
+    return null;
+  }
 
   return (
-    <View className="px-4 pt-4 pb-2">
-      <Text className="font-display text-2xl text-cream mb-3">
-        INVITATIONS ({invitations.length})
-      </Text>
-      <View style={{ gap: 10 }}>
-        {invitations.map((inv) => (
+    <View className="pt-4 pb-2">
+      <View className="pl-4">
+        <Text className="font-display text-2xl text-cream mb-3">
+          INVITATIONS ({invitations.length})
+        </Text>
+      </View>
+      <ScrollView horizontal contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4 }}>
+        {invitations.map((invitation) => (
           <View
-            key={inv.id}
+            key={invitation.id}
             style={{
+              width: 260,
               backgroundColor: '#181818',
               borderRadius: 12,
               borderWidth: 1,
               borderColor: 'rgba(255,255,255,0.08)',
               padding: 14,
+              marginRight: 12,
             }}
           >
             <Pressable
-              onPress={() => router.push(`/games/${inv.game_id}`)}
+              onPress={() => router.push(`/games/${invitation.game_id}`)}
               style={({ pressed }) => ({ marginBottom: 12, opacity: pressed ? 0.6 : 1 })}
             >
               <Text
@@ -43,21 +94,22 @@ export function InvitationsInbox({ invitations, onRespond }: Props) {
                 }}
                 numberOfLines={1}
               >
-                {inv.game.title}
+                {invitation.game.title}
               </Text>
               <Text
                 style={{ fontFamily: 'DMSans', fontSize: 12, color: '#7A7870', marginBottom: 1 }}
               >
-                {inv.game.court?.name ?? '—'} · {formatDate(inv.game.starts_at)}
+                {invitation.game.court?.name ?? '—'} · {formatDate(invitation.game.starts_at)}
               </Text>
               <Text style={{ fontFamily: 'DMSans', fontSize: 12, color: '#7A7870' }}>
-                Invited by {inv.inviter.name}
+                Invited by {invitation.inviter.name}
               </Text>
             </Pressable>
 
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable
-                onPress={() => onRespond(inv.game_id, inv.id, 'declined')}
+              <TouchableOpacity
+                onPress={() => respondMutation.mutate({ invitation, status: 'declined' })}
+                disabled={respondMutation.isPending}
                 style={{
                   flex: 1,
                   borderRadius: 8,
@@ -67,12 +119,19 @@ export function InvitationsInbox({ invitations, onRespond }: Props) {
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ fontFamily: 'DMSans', fontSize: 13, color: '#7A7870' }}>
-                  Decline
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => onRespond(inv.game_id, inv.id, 'accepted')}
+                {respondMutation.isPending &&
+                respondMutation.variables?.invitation.id === invitation.id &&
+                respondMutation.variables?.status === 'declined' ? (
+                  <ActivityIndicator size="small" color="#7A7870" />
+                ) : (
+                  <Text style={{ fontFamily: 'DMSans', fontSize: 13, color: '#7A7870' }}>
+                    Decline
+                  </Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => respondMutation.mutate({ invitation, status: 'accepted' })}
+                disabled={respondMutation.isPending}
                 style={{
                   flex: 1,
                   borderRadius: 8,
@@ -81,21 +140,27 @@ export function InvitationsInbox({ invitations, onRespond }: Props) {
                   alignItems: 'center',
                 }}
               >
-                <Text
-                  style={{
-                    fontFamily: 'DMSans',
-                    fontSize: 13,
-                    color: '#F0EDE8',
-                    fontWeight: '600',
-                  }}
-                >
-                  Accept →
-                </Text>
-              </Pressable>
+                {respondMutation.isPending &&
+                respondMutation.variables?.invitation.id === invitation.id &&
+                respondMutation.variables?.status === 'accepted' ? (
+                  <ActivityIndicator size="small" color="#F0EDE8" />
+                ) : (
+                  <Text
+                    style={{
+                      fontFamily: 'DMSans',
+                      fontSize: 13,
+                      color: '#F0EDE8',
+                      fontWeight: '600',
+                    }}
+                  >
+                    Accept →
+                  </Text>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         ))}
-      </View>
+      </ScrollView>
     </View>
   );
 }

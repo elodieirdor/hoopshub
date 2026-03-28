@@ -10,38 +10,12 @@ import { ProfileIdentity } from '@/components/profile/ProfileIdentity';
 import { ProfileStats } from '@/components/profile/ProfileStats';
 import { ProfileRepSection } from '@/components/profile/ProfileRepSection';
 import { InvitationsInbox } from '@/components/invitations/InvitationsInbox';
-import { invitationQueries, gameQueries } from '@/api/queries';
-import { respondToInvitation } from '@/api/invitations';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const [menuOpen, setMenuOpen] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: invitations = [] } = useQuery(invitationQueries.myPending());
-
-  const respondMutation = useMutation({
-    mutationFn: ({
-      gameId,
-      id,
-      status,
-    }: {
-      gameId: number;
-      id: number;
-      status: 'accepted' | 'declined';
-    }) => respondToInvitation(gameId, id, status),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: invitationQueries.myPending().queryKey });
-      if (variables.status === 'accepted') {
-        // Accepting joins the game server-side — bust all game queries so
-        // upcoming games and feed reflect the new player counts.
-        queryClient.invalidateQueries({ queryKey: ['games'] });
-      }
-    },
-    onError: () => Alert.alert('Error', 'Could not respond to invitation. Please try again.'),
-  });
 
   if (!user) {
     return (
@@ -78,11 +52,6 @@ export default function ProfileScreen() {
         //   <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />
         // }
       >
-        <InvitationsInbox
-          invitations={invitations}
-          onRespond={(gameId, id, status) => respondMutation.mutate({ gameId, id, status })}
-        />
-
         <ProfileIdentity user={user} />
 
         <View
