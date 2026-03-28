@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, Share, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { ProfileIdentity } from '@/components/profile/ProfileIdentity';
 import { ProfileStats } from '@/components/profile/ProfileStats';
@@ -20,8 +19,6 @@ function avatarBgColor(name: string): string {
 
 export default function PublicProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-
-  const { top } = useSafeAreaInsets();
 
   const { data: profile, isLoading, error, refetch } = useQuery(userQueries.detail(id!));
 
@@ -52,17 +49,17 @@ export default function PublicProfileScreen() {
   const avgRating = Number(profile.avg_rating ?? 0);
 
   return (
-    <View className="flex-1 bg-dark" style={{ paddingTop: top }}>
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3">
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="arrow-back" size={24} color="#F0EDE8" />
-        </Pressable>
-        <Pressable onPress={handleShare} hitSlop={12}>
-          <Ionicons name="share-outline" size={24} color="#F0EDE8" />
-        </Pressable>
-      </View>
-
+    <View className="flex-1 bg-dark">
+      <Stack.Screen
+        options={{
+          title: profile?.name ?? '',
+          headerRight: () => (
+            <Pressable onPress={handleShare} hitSlop={12}>
+              <Ionicons name="share-outline" size={24} color="#F0EDE8" />
+            </Pressable>
+          ),
+        }}
+      />
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
         <ProfileIdentity
           user={profile}

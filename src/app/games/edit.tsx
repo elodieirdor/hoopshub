@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameForm';
 import { updateGame } from '@/api/games';
@@ -87,23 +87,24 @@ export default function EditGameScreen() {
   }
 
   return (
-    <GameForm
-      heading="EDIT GAME"
-      onClose={() => router.back()}
-      control={control}
-      errors={errors}
-      handleSubmit={handleSubmit}
-      setValue={setValue}
-      watch={watch}
-      onSubmit={onSubmit}
-      submitLabel="Save changes"
-      submittingLabel="Saving…"
-      isSubmitting={isSubmitting}
-      apiError={apiError}
-      courts={courts}
-      courtsLoading={courtsLoading}
-      selectedCourt={selectedCourt}
-      onSelectCourt={setSelectedCourt}
-    />
+    <>
+      <Stack.Screen options={{ title: 'EDIT GAME' }} />
+      <GameForm
+        control={control}
+        errors={errors}
+        handleSubmit={handleSubmit}
+        setValue={setValue}
+        watch={watch}
+        onSubmit={onSubmit}
+        submitLabel="Save changes"
+        submittingLabel="Saving…"
+        isSubmitting={isSubmitting}
+        apiError={apiError}
+        courts={courts}
+        courtsLoading={courtsLoading}
+        selectedCourt={selectedCourt}
+        onSelectCourt={setSelectedCourt}
+      />
+    </>
   );
 }

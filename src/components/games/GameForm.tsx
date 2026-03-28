@@ -100,8 +100,6 @@ function PillSelector<T extends string | number>({ options, value, onChange }: P
 }
 
 type Props = {
-  heading: string;
-  onClose: () => void;
   control: Control<GameFormData>;
   errors: FieldErrors<GameFormData>;
   handleSubmit: UseFormHandleSubmit<GameFormData>;
@@ -119,8 +117,6 @@ type Props = {
 };
 
 export function GameForm({
-  heading,
-  onClose,
   control,
   errors,
   handleSubmit,
@@ -149,17 +145,9 @@ export function GameForm({
     >
       <ScrollView
         className="flex-1 bg-dark"
-        contentContainerClassName="px-6 py-12"
+        contentContainerClassName="px-6 py-8"
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
-        <View className="flex-row items-center justify-between mb-8">
-          <Text className="font-display text-4xl text-cream">{heading}</Text>
-          <Pressable onPress={onClose} hitSlop={12}>
-            <Ionicons name="close" size={24} color="#F0EDE8" />
-          </Pressable>
-        </View>
-
         {/* Court selector */}
         <View className="mb-4">
           <Text className="text-cream font-sans text-sm mb-2">Court</Text>

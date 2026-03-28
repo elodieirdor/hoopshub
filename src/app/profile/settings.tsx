@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
@@ -46,7 +46,7 @@ function Divider() {
 }
 
 export default function SettingsScreen() {
-  const { top, bottom } = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
   const logout = useAuthStore((s) => s.logout);
   const version = Constants.expoConfig?.version ?? '—';
 
@@ -58,15 +58,8 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-dark" style={{ paddingTop: top }}>
-      <View className="flex-row items-center justify-between px-4 py-4">
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color="#F0EDE8" />
-        </Pressable>
-        <Text className="font-display text-xl text-cream">SETTINGS</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
+    <View className="flex-1 bg-dark">
+      <Stack.Screen options={{ title: 'SETTINGS' }} />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{

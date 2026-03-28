@@ -153,6 +153,30 @@ completed: muted  (#7A7870)
 - Pass IDs via route params: `router.push('/games/123')`
 - Read params with `useLocalSearchParams()`
 
+### Native Stack Headers
+Stack screens use the native React Navigation header — never render a custom `View`-based header with a manual back button. Configure header options via `<Stack.Screen options={...} />` inside the screen component.
+
+Global header style is set in `app/_layout.tsx` (dark bg, cream tint, Bebas Neue title font). Per-screen overrides:
+```typescript
+// Title only
+<Stack.Screen options={{ title: 'SETTINGS' }} />
+
+// Title + right action (e.g. Save)
+<Stack.Screen options={{
+  title: 'EDIT PROFILE',
+  headerRight: () => <Pressable onPress={save}><Text>Save</Text></Pressable>,
+}} />
+
+// Custom left button (e.g. close instead of back)
+<Stack.Screen options={{
+  title: 'POST A GAME',
+  headerLeft: () => <Pressable onPress={router.back}><Ionicons name="close" /></Pressable>,
+}} />
+```
+
+**Exceptions — screens that keep custom headers:**
+- `(tabs)/index.tsx` and `(tabs)/profile.tsx` — `NativeTabs` screens have no Stack header; their inline header `View` is intentional.
+
 ## Common Patterns
 
 ### Fetching data

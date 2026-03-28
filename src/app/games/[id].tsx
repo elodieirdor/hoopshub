@@ -128,7 +128,6 @@ export default function GameDetailScreen() {
       <Stack.Screen
         options={{
           title: game.title,
-          headerBackTitle: 'Back',
           headerRight:
             isHost && isActive
               ? () => (

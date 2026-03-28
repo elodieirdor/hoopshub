@@ -1,12 +1,10 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/authStore';
 import { FormInput } from '@/components/ui/form-input';
 import { updateEmail } from '@/api/users';
@@ -19,7 +17,6 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function ChangeEmailScreen() {
-  const { top } = useSafeAreaInsets();
   const setUser = useAuthStore((s) => s.setUser);
 
   const {
@@ -40,27 +37,26 @@ export default function ChangeEmailScreen() {
   });
 
   return (
-    <View className="flex-1 bg-dark" style={{ paddingTop: top }}>
-      <View className="flex-row items-center justify-between px-4 py-4">
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color="#F0EDE8" />
-        </Pressable>
-        <Text className="font-display text-xl text-cream">CHANGE EMAIL</Text>
-        <Pressable
-          onPress={handleSubmit((data) => mutation.mutate(data))}
-          hitSlop={12}
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending ? (
-            <ActivityIndicator size="small" color="#FF5C00" />
-          ) : (
-            <Text className="font-sans font-semibold text-sm" style={{ color: '#FF5C00' }}>
-              Save
-            </Text>
-          )}
-        </Pressable>
-      </View>
-
+    <View className="flex-1 bg-dark">
+      <Stack.Screen
+        options={{
+          title: 'CHANGE EMAIL',
+          headerRight: () =>
+            mutation.isPending ? (
+              <ActivityIndicator size="small" color="#FF5C00" />
+            ) : (
+              <Pressable
+                onPress={handleSubmit((data) => mutation.mutate(data))}
+                hitSlop={12}
+                disabled={mutation.isPending}
+              >
+                <Text style={{ color: '#FF5C00', fontFamily: 'DMSans_600SemiBold', fontSize: 14 }}>
+                  Save
+                </Text>
+              </Pressable>
+            ),
+        }}
+      />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 48 }}
