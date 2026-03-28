@@ -1,20 +1,11 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { router } from 'expo-router';
+import { Alert, ScrollView, View } from 'react-native';
 import { Heading } from '@/components/ui/Heading';
-import { formatDate } from '@/utils/formatters';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invitationQueries } from '@/api/queries';
 import { respondToInvitation } from '@/api/invitations';
 import { GameInvitation } from '@/types';
+import { InvitationCard } from './InvitationCard';
 
 export function InvitationsInbox() {
   const queryClient = useQueryClient();
@@ -68,98 +59,20 @@ export function InvitationsInbox() {
         </Heading>
       </View>
       <ScrollView horizontal contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4 }}>
-        {invitations.map((invitation) => (
-          <View
-            key={invitation.id}
-            style={{
-              width: 260,
-              backgroundColor: '#181818',
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.08)',
-              padding: 14,
-              marginRight: 12,
-            }}
-          >
-            <Pressable
-              onPress={() => router.push(`/games/${invitation.game_id}`)}
-              style={({ pressed }) => ({ marginBottom: 12, opacity: pressed ? 0.6 : 1 })}
-            >
-              <Text
-                style={{
-                  fontFamily: 'BebasNeue_400Regular',
-                  fontSize: 16,
-                  color: '#F0EDE8',
-                  marginBottom: 2,
-                }}
-                numberOfLines={1}
-              >
-                {invitation.game.title}
-              </Text>
-              <Text
-                style={{ fontFamily: 'DMSans', fontSize: 12, color: '#7A7870', marginBottom: 1 }}
-              >
-                {invitation.game.court?.name ?? '—'} · {formatDate(invitation.game.starts_at)}
-              </Text>
-              <Text style={{ fontFamily: 'DMSans', fontSize: 12, color: '#7A7870' }}>
-                Invited by {invitation.inviter.name}
-              </Text>
-            </Pressable>
-
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <TouchableOpacity
-                onPress={() => respondMutation.mutate({ invitation, status: 'declined' })}
-                disabled={respondMutation.isPending}
-                style={{
-                  flex: 1,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.12)',
-                  paddingVertical: 9,
-                  alignItems: 'center',
-                }}
-              >
-                {respondMutation.isPending &&
-                respondMutation.variables?.invitation.id === invitation.id &&
-                respondMutation.variables?.status === 'declined' ? (
-                  <ActivityIndicator size="small" color="#7A7870" />
-                ) : (
-                  <Text style={{ fontFamily: 'DMSans', fontSize: 13, color: '#7A7870' }}>
-                    Decline
-                  </Text>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => respondMutation.mutate({ invitation, status: 'accepted' })}
-                disabled={respondMutation.isPending}
-                style={{
-                  flex: 1,
-                  borderRadius: 8,
-                  backgroundColor: '#FF5C00',
-                  paddingVertical: 9,
-                  alignItems: 'center',
-                }}
-              >
-                {respondMutation.isPending &&
-                respondMutation.variables?.invitation.id === invitation.id &&
-                respondMutation.variables?.status === 'accepted' ? (
-                  <ActivityIndicator size="small" color="#F0EDE8" />
-                ) : (
-                  <Text
-                    style={{
-                      fontFamily: 'DMSans',
-                      fontSize: 13,
-                      color: '#F0EDE8',
-                      fontWeight: '600',
-                    }}
-                  >
-                    Accept →
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+        {invitations.map((invitation) => {
+          const isThisCard =
+            respondMutation.isPending && respondMutation.variables?.invitation.id === invitation.id;
+          return (
+            <InvitationCard
+              key={invitation.id}
+              invitation={invitation}
+              onAccept={() => respondMutation.mutate({ invitation, status: 'accepted' })}
+              onDecline={() => respondMutation.mutate({ invitation, status: 'declined' })}
+              isPending={isThisCard}
+              pendingStatus={isThisCard ? (respondMutation.variables?.status ?? null) : null}
+            />
+          );
+        })}
       </ScrollView>
     </View>
   );
