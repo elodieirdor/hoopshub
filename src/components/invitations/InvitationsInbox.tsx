@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { formatDate } from '@/utils/formatters';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invitationQueries } from '@/api/queries';
@@ -16,7 +16,6 @@ import { respondToInvitation } from '@/api/invitations';
 import { GameInvitation } from '@/types';
 
 export function InvitationsInbox() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const { data: invitations = [] } = useQuery(invitationQueries.myPending());

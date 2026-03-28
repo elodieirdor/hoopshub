@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import * as Burnt from 'burnt';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,7 +23,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function EditCourtScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+
   const [error, setError] = useState<string | null>(null);
 
   const { data: court, isLoading: initialLoading } = useQuery(courtQueries.detail(id!));

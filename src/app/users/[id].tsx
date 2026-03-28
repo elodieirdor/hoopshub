@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, Share, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +20,7 @@ function avatarBgColor(name: string): string {
 
 export default function PublicProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+
   const { top } = useSafeAreaInsets();
 
   const { data: profile, isLoading, error, refetch } = useQuery(userQueries.detail(id!));

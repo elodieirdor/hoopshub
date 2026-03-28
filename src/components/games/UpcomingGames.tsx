@@ -1,4 +1,3 @@
-import { Game } from '@/types';
 import { ScrollView, Text, View } from 'react-native';
 import { UpcomingGameCard } from '@/components/games/UpcomingGameCard';
 import React from 'react';

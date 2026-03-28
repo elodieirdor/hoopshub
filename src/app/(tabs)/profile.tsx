@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { GameHistoryRow } from '@/components/games/GameHistoryRow';
 import { ProfileIdentity } from '@/components/profile/ProfileIdentity';
 import { ProfileStats } from '@/components/profile/ProfileStats';
 import { ProfileRepSection } from '@/components/profile/ProfileRepSection';
-import { InvitationsInbox } from '@/components/invitations/InvitationsInbox';
 
 export default function ProfileScreen() {
-  const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const [menuOpen, setMenuOpen] = useState(false);

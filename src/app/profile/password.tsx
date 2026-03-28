@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,7 +24,6 @@ const schema = z
 type FormData = z.infer<typeof schema>;
 
 export default function ChangePasswordScreen() {
-  const router = useRouter();
   const { top } = useSafeAreaInsets();
 
   const {

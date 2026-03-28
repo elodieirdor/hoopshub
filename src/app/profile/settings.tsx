@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
@@ -46,7 +46,6 @@ function Divider() {
 }
 
 export default function SettingsScreen() {
-  const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const logout = useAuthStore((s) => s.logout);
   const version = Constants.expoConfig?.version ?? '—';

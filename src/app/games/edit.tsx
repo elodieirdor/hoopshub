@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameForm';
 import { updateGame } from '@/api/games';
@@ -11,7 +11,6 @@ import { Court } from '@/types';
 import { useLocationStore } from '@/store/locationStore';
 
 export default function EditGameScreen() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { activeCity } = useLocationStore();

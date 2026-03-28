@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, Image } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { joinGame, leaveGame, updateGame } from '@/api/games';
@@ -16,7 +16,7 @@ const HERO_HEIGHT = 220;
 
 export default function GameDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
   const [inviteModalVisible, setInviteModalVisible] = useState(false);

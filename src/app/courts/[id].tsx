@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { courtQueries, gameQueries } from '@/api/queries';
@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/Badge';
 export default function CourtDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const courtId = Number(id);
-  const router = useRouter();
 
   const { data: court, isLoading } = useQuery(courtQueries.detail(courtId));
 

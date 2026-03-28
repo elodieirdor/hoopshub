@@ -1,13 +1,12 @@
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { InvitationsInbox } from '@/components/invitations/InvitationsInbox';
 import UpcomingGames from '@/components/games/UpcomingGames';
 import AllGames from '@/components/games/AllGames';
 
 export default function GamesScreen() {
-  const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
 
   return (

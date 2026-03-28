@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
@@ -23,7 +23,6 @@ interface GameCardProps {
 }
 
 export function GameCard({ game }: GameCardProps) {
-  const router = useRouter();
   const currentUserId = useAuthStore((s) => s.user?.id);
 
   const filled = game.game_players?.length ?? 0;

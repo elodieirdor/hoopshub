@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,7 +27,6 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function EditProfileScreen() {
-  const router = useRouter();
   const { top } = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user)!;
   const setUser = useAuthStore((s) => s.setUser);

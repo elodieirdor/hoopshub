@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { gameQueries } from '@/api/queries';
 import { GameCard } from '@/components/games/GameCard';

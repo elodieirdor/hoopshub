@@ -13,14 +13,13 @@ import {
 import MapView from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { CourtPin } from '@/components/courts/CourtPin';
 import { CourtCard } from '@/components/courts/CourtCard';
 import { courtQueries } from '@/api/queries';
-import { useAuthStore } from '@/store/authStore';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { Court } from '@/types';
 import { haversineKm } from '@/utils/geo';
@@ -49,7 +48,6 @@ const SNAP_POINTS = [0, SCREEN_HEIGHT * 0.35, SCREEN_HEIGHT * 0.65] as const;
 type SnapIndex = 0 | 1 | 2;
 
 export default function CourtsScreen() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
   const listRef = useRef<FlatList>(null);

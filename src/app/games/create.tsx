@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameForm';
 import { createGame } from '@/api/games';
-import { courtQueries, gameQueries } from '@/api/queries';
+import { courtQueries } from '@/api/queries';
 import { Court } from '@/types';
 import { useLocationStore } from '@/store/locationStore';
 
 export default function CreateGameScreen() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { court_id: courtIdParam } = useLocalSearchParams<{ court_id?: string }>();
   const { activeCity } = useLocationStore();
