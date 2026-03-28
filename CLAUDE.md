@@ -76,7 +76,8 @@ src/
 │   ├── auth.ts                  # register, login, logout, me
 │   ├── courts.ts                # getCourts, getCourt, createCourt
 │   ├── games.ts                 # getGames, getGame, createGame, joinGame, leaveGame, updateGame, deleteGame, getMyGames, getCourtGames
-│   ├── queries.ts               # Centralized queryOptions — courtQueries, gameQueries, userQueries
+│   ├── queries.ts               # Centralized queryOptions — courtQueries, gameQueries, userQueries, invitationQueries
+│   ├── invitations.ts           # getMyInvitations, sendInvitation, respondToInvitation, searchInvitable, getGameInvitations
 │   └── profiles.ts              # getProfile, updateProfile
 ├── components/
 │   ├── ui/                      # Shared: Button, Input, Badge, Card, Avatar, LoadingScreen
@@ -116,6 +117,8 @@ Always import types from `src/types` — never redefine inline.
 - **Join / Leave / Cancel only happen from the game detail screen** (`games/[id].tsx`) — never from cards
 - `GameCard` shows a green "Joined" badge when the auth user is in `game_players`
 - Cancel option (host only) and Leave option (non-host) are in the bottom action bar of the detail screen
+- **Invitations**: any confirmed player (including host) can invite; `invitationQueries.forGame` only runs when the current user is in `game_players`
+- Pending invitations count against open spots — `emptySlots = max_players - confirmed - pending`; invite button hides when `emptySlots === 0`
 
 ## Skill Level Colors
 ```
@@ -171,6 +174,8 @@ Available query factories:
 - `gameQueries.forCourt(courtId)` — games at a court
 - `gameQueries.myUpcoming()` — current user's upcoming games
 - `userQueries.detail(id)` — public user profile
+- `invitationQueries.myPending()` — current user's pending invitations (inbox)
+- `invitationQueries.forGame(gameId)` — pending invitations for a game (only fetch when user is a confirmed player)
 
 ### Mutations
 ```typescript

@@ -1,5 +1,5 @@
 import client from './client';
-import { GameInvitation } from '@/types';
+import { GameInvitation, User } from '@/types';
 
 export const getMyInvitations = async (): Promise<GameInvitation[]> => {
   const res = await client.get<GameInvitation[]>('/invitations');
@@ -12,9 +12,20 @@ export const sendInvitation = async (gameId: number, inviteeId: number) => {
 };
 
 export const respondToInvitation = async (
+  gameId: number,
   invitationId: number,
   status: 'accepted' | 'declined',
 ) => {
-  const res = await client.patch(`/invitations/${invitationId}`, { status });
+  const res = await client.patch(`/games/${gameId}/invitations/${invitationId}`, { status });
+  return res.data;
+};
+
+export const searchInvitable = async (gameId: number, query: string): Promise<User[]> => {
+  const res = await client.get<User[]>(`/games/${gameId}/invitable`, { params: { q: query } });
+  return res.data;
+};
+
+export const getGameInvitations = async (gameId: number): Promise<GameInvitation[]> => {
+  const res = await client.get<GameInvitation[]>(`/games/${gameId}/invitations`);
   return res.data;
 };

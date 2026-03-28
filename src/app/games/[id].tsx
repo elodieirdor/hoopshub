@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, Image } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { joinGame, leaveGame, updateGame } from '@/api/games';
-import { gameQueries } from '@/api/queries';
+import { respondToInvitation } from '@/api/invitations';
+import { gameQueries, invitationQueries } from '@/api/queries';
 import { useAuthStore } from '@/store/authStore';
 import { BasketballCourtSVG } from '@/components/games/BasketballCourtSVG';
+import { InvitePlayerModal } from '@/components/games/InvitePlayerModal';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { initials, formatDate, formatDuration, SKILL_COLORS } from '@/utils/formatters';
 
@@ -17,13 +19,26 @@ export default function GameDetailScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
+  const [inviteModalVisible, setInviteModalVisible] = useState(false);
 
   const { data: game, isLoading: loading, error, refetch } = useQuery(gameQueries.detail(id!));
 
+  const isPlayerInGame =
+    !!game && !!currentUser && game.game_players?.some((p) => p.player_id === currentUser.id);
+  const isGameFull =
+    !!game && (game.game_players?.length >= game.max_players || game.status === 'full');
+
+  const { data: gameInvitations = [] } = useQuery({
+    ...invitationQueries.forGame(Number(id)),
+    enabled: isPlayerInGame && !isGameFull,
+  });
+
+  const { data: myInvitations = [] } = useQuery(invitationQueries.myPending());
+  const myInvitation = myInvitations.find((inv) => inv.game_id === Number(id)) ?? null;
+
+  // Invalidate everything game-related in one call — the key hierarchy makes this safe.
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: gameQueries.detail(id!).queryKey });
     queryClient.invalidateQueries({ queryKey: ['games'] });
-    queryClient.invalidateQueries({ queryKey: gameQueries.myUpcoming().queryKey });
   };
 
   const joinMutation = useMutation({
@@ -38,12 +53,23 @@ export default function GameDetailScreen() {
     onError: () => Alert.alert('Error', 'Could not leave game. Please try again.'),
   });
 
+  const respondMutation = useMutation({
+    mutationFn: (status: 'accepted' | 'declined') =>
+      respondToInvitation(Number(id), myInvitation!.id, status),
+    onSuccess: (_data, status) => {
+      queryClient.invalidateQueries({ queryKey: invitationQueries.myPending().queryKey });
+      if (status === 'accepted') {
+        invalidate();
+      }
+    },
+    onError: () => Alert.alert('Error', 'Could not respond to invitation. Please try again.'),
+  });
+
   const cancelMutation = useMutation({
     mutationFn: () => updateGame(game!.id, { status: 'cancelled' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: gameQueries.detail(id!).queryKey });
-      queryClient.invalidateQueries({ queryKey: ['games'] });
-      queryClient.invalidateQueries({ queryKey: gameQueries.myUpcoming().queryKey });
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: invitationQueries.forGame(game!.id).queryKey });
       router.back();
     },
     onError: () => Alert.alert('Error', 'Could not cancel game. Please try again.'),
@@ -67,14 +93,21 @@ export default function GameDetailScreen() {
 
   const confirmedPlayers = game.game_players ?? [];
   const filled = confirmedPlayers.length;
-  const emptySlots = Math.max(0, game.max_players - filled);
   const isHost = currentUser?.id === game.host_id;
   const hasJoined = !isHost && confirmedPlayers.some((p) => p.player_id === currentUser?.id);
   const isActive = game.status === 'open' || game.status === 'full';
   const isFull = filled >= game.max_players || game.status === 'full';
   const actionLoading =
-    joinMutation.isPending || leaveMutation.isPending || cancelMutation.isPending;
+    joinMutation.isPending ||
+    leaveMutation.isPending ||
+    cancelMutation.isPending ||
+    respondMutation.isPending;
   const skillColor = SKILL_COLORS[game.skill_level] ?? '#7A7870';
+  const isUpcoming = new Date(game.starts_at) > new Date();
+  const pendingInvitations = isPlayerInGame
+    ? gameInvitations.filter((inv) => inv.status === 'pending')
+    : [];
+  const emptySlots = Math.max(0, game.max_players - filled - pendingInvitations.length);
 
   const handleLeave = () => {
     Alert.alert('Leave game', 'Are you sure you want to leave this game?', [
@@ -280,9 +313,36 @@ export default function GameDetailScreen() {
                 </Pressable>
               </View>
             ))}
+            {pendingInvitations.map((inv) => (
+              <View key={`inv-${inv.id}`}>
+                <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+                <View className="flex-row items-center gap-3 px-4 py-3" style={{ opacity: 0.55 }}>
+                  <View
+                    className="rounded-full items-center justify-center"
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderWidth: 1.5,
+                      borderColor: '#FF5C00',
+                      borderStyle: 'dashed',
+                    }}
+                  >
+                    <Text className="text-cream font-sans font-semibold text-xs">
+                      {initials(inv.invitee?.name ?? '?')}
+                    </Text>
+                  </View>
+                  <Text className="text-cream font-sans text-sm flex-1">
+                    {inv.invitee?.name ?? 'Unknown'}
+                  </Text>
+                  <Text style={{ color: '#FF5C00', fontFamily: 'DMSans', fontSize: 11 }}>
+                    Invited
+                  </Text>
+                </View>
+              </View>
+            ))}
             {Array.from({ length: emptySlots }).map((_, i) => (
               <View key={`empty-${i}`}>
-                {(i > 0 || confirmedPlayers.length > 0) && (
+                {(i > 0 || confirmedPlayers.length > 0 || pendingInvitations.length > 0) && (
                   <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
                 )}
                 <View className="flex-row items-center gap-3 px-4 py-3">
@@ -301,6 +361,37 @@ export default function GameDetailScreen() {
             ))}
           </View>
 
+          {/* Invite button — any player in the game, open slots remaining, active, upcoming */}
+          {isPlayerInGame && emptySlots > 0 && isActive && isUpcoming && (
+            <Pressable
+              onPress={() => setInviteModalVisible(true)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                padding: 10,
+                borderRadius: 10,
+                borderWidth: 0.5,
+                borderColor: 'rgba(255,92,0,0.3)',
+                backgroundColor: 'rgba(255,92,0,0.08)',
+                marginTop: 12,
+                marginBottom: 20,
+              }}
+            >
+              <Ionicons name="person-add-outline" size={16} color="#FF5C00" />
+              <Text
+                style={{
+                  color: '#FF5C00',
+                  fontSize: 13,
+                  fontFamily: 'DMSans',
+                  fontWeight: '600',
+                }}
+              >
+                Invite a player
+              </Text>
+            </Pressable>
+          )}
+
           {/* Description */}
           {game.description ? (
             <View>
@@ -310,6 +401,15 @@ export default function GameDetailScreen() {
           ) : null}
         </View>
       </ScrollView>
+
+      <InvitePlayerModal
+        gameId={game.id}
+        visible={inviteModalVisible}
+        onClose={() => setInviteModalVisible(false)}
+        onInvited={() => {
+          queryClient.invalidateQueries({ queryKey: invitationQueries.forGame(game.id).queryKey });
+        }}
+      />
 
       {/* Bottom action bar */}
       <View
@@ -346,6 +446,44 @@ export default function GameDetailScreen() {
             <Text className="font-sans font-semibold text-base text-muted">
               {game.status === 'completed' ? 'Game completed' : 'Game cancelled'}
             </Text>
+          </View>
+        ) : myInvitation ? (
+          <View style={{ gap: 8 }}>
+            <Text className="text-muted font-sans text-xs text-center">
+              Invited by {myInvitation.inviter.name}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Pressable
+                onPress={() => respondMutation.mutate('declined')}
+                disabled={actionLoading}
+                className="flex-1 rounded-xl py-4 items-center"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.08)',
+                }}
+              >
+                {respondMutation.isPending && respondMutation.variables === 'declined' ? (
+                  <ActivityIndicator size="small" color="#7A7870" />
+                ) : (
+                  <Text className="font-sans font-semibold text-base text-muted">Decline</Text>
+                )}
+              </Pressable>
+              <Pressable
+                onPress={() => respondMutation.mutate('accepted')}
+                disabled={actionLoading}
+                className="flex-1 rounded-xl py-4 items-center"
+                style={{ backgroundColor: '#FF5C00' }}
+              >
+                {respondMutation.isPending && respondMutation.variables === 'accepted' ? (
+                  <ActivityIndicator size="small" color="#F0EDE8" />
+                ) : (
+                  <Text className="font-sans font-semibold text-base" style={{ color: '#F0EDE8' }}>
+                    Accept
+                  </Text>
+                )}
+              </Pressable>
+            </View>
           </View>
         ) : hasJoined ? (
           <Pressable

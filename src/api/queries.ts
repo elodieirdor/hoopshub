@@ -2,12 +2,16 @@ import { queryOptions } from '@tanstack/react-query';
 import { getCourts, getCourt } from './courts';
 import { getGames, getGame, getMyGames, getCourtGames, GetGamesParams } from './games';
 import { getUser } from './users';
+import { getMyInvitations, getGameInvitations } from './invitations';
 import { City } from '@/types';
+
+// All keys follow a consistent hierarchy so a single top-level invalidation
+// (e.g. queryKey: ['games']) busts every game-related query at once.
 
 export const courtQueries = {
   list: (city: City | null | undefined) =>
     queryOptions({
-      queryKey: ['courts', city?.id] as const,
+      queryKey: ['courts', 'list', city?.id] as const,
       queryFn: () =>
         getCourts({ lat: city?.lat, lng: city?.lng, radius_km: city?.radius_km ?? 30 }),
       enabled: !!city,
@@ -15,7 +19,7 @@ export const courtQueries = {
     }),
   detail: (id: number | string) =>
     queryOptions({
-      queryKey: ['court', Number(id)] as const,
+      queryKey: ['courts', 'detail', Number(id)] as const,
       queryFn: () => getCourt(Number(id)),
       enabled: !!id,
       staleTime: 30 * 60 * 1000,
@@ -25,7 +29,7 @@ export const courtQueries = {
 export const gameQueries = {
   feedForCity: (city: City | null | undefined, enabled: boolean) =>
     queryOptions({
-      queryKey: ['games', { cityId: city?.id, status: 'open' }] as const,
+      queryKey: ['games', 'feed', city?.id] as const,
       queryFn: () =>
         getGames({
           lat: city?.lat,
@@ -38,27 +42,27 @@ export const gameQueries = {
     }),
   list: (params?: GetGamesParams) =>
     queryOptions({
-      queryKey: ['games', params] as const,
+      queryKey: ['games', 'list', params] as const,
       queryFn: () => getGames(params),
       staleTime: 2 * 60 * 1000,
     }),
   detail: (id: number | string) =>
     queryOptions({
-      queryKey: ['game', Number(id)] as const,
+      queryKey: ['games', 'detail', Number(id)] as const,
       queryFn: () => getGame(Number(id)),
       enabled: !!id,
       staleTime: 1 * 60 * 1000,
     }),
   forCourt: (courtId: number) =>
     queryOptions({
-      queryKey: ['games', { court_id: courtId }] as const,
+      queryKey: ['games', 'court', courtId] as const,
       queryFn: () => getCourtGames(courtId),
       enabled: !!courtId,
       staleTime: 2 * 60 * 1000,
     }),
   myUpcoming: () =>
     queryOptions({
-      queryKey: ['my-games', 'upcoming'] as const,
+      queryKey: ['games', 'upcoming'] as const,
       queryFn: () => getMyGames('upcoming'),
       staleTime: 2 * 60 * 1000,
     }),
@@ -67,8 +71,24 @@ export const gameQueries = {
 export const userQueries = {
   detail: (id: number | string) =>
     queryOptions({
-      queryKey: ['user', Number(id)] as const,
+      queryKey: ['users', 'detail', Number(id)] as const,
       queryFn: () => getUser(Number(id)),
       enabled: !!id,
+    }),
+};
+
+export const invitationQueries = {
+  myPending: () =>
+    queryOptions({
+      queryKey: ['invitations', 'pending'] as const,
+      queryFn: () => getMyInvitations(),
+      staleTime: 1 * 60 * 1000,
+    }),
+  forGame: (gameId: number) =>
+    queryOptions({
+      queryKey: ['invitations', 'game', gameId] as const,
+      queryFn: () => getGameInvitations(gameId),
+      enabled: !!gameId,
+      staleTime: 30 * 1000,
     }),
 };

@@ -22,13 +22,13 @@ export function UpcomingGameCard({ game, isHost, onPress }: UpcomingGameCardProp
     <Pressable
       onPress={onPress}
       style={({ pressed }) => ({
-        width: 148,
+        width: 200,
         backgroundColor: pressed ? '#202020' : '#181818',
         borderRadius: 12,
         borderWidth: 1,
         borderColor: pressed ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.08)',
         padding: 12,
-        marginRight: 10,
+        marginRight: 12,
         gap: 10,
         opacity: pressed ? 0.9 : 1,
       })}
