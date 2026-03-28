@@ -113,6 +113,26 @@ export default function ChangePasswordScreen() {
             )}
           />
         </View>
+
+        <Pressable
+          onPress={handleSubmit((data) => mutation.mutate(data))}
+          disabled={mutation.isPending}
+          style={{
+            marginTop: 32,
+            backgroundColor: mutation.isPending ? '#7A7870' : '#FF5C00',
+            borderRadius: 12,
+            paddingVertical: 16,
+            alignItems: 'center',
+          }}
+        >
+          {mutation.isPending ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={{ color: '#fff', fontFamily: 'DMSans_600SemiBold', fontSize: 16 }}>
+              Save
+            </Text>
+          )}
+        </Pressable>
       </ScrollView>
     </View>
   );

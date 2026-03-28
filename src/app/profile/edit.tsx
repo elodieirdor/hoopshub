@@ -259,6 +259,26 @@ export default function EditProfileScreen() {
             )}
           />
         </View>
+
+        <Pressable
+          onPress={handleSubmit((data) => saveMutation.mutate(data))}
+          disabled={saveMutation.isPending}
+          style={{
+            marginTop: 32,
+            backgroundColor: saveMutation.isPending ? '#7A7870' : '#FF5C00',
+            borderRadius: 12,
+            paddingVertical: 16,
+            alignItems: 'center',
+          }}
+        >
+          {saveMutation.isPending ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={{ color: '#fff', fontFamily: 'DMSans_600SemiBold', fontSize: 16 }}>
+              Save
+            </Text>
+          )}
+        </Pressable>
       </ScrollView>
     </View>
   );
