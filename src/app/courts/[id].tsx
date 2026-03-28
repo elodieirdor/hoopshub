@@ -8,6 +8,7 @@ import { courtQueries, gameQueries } from '@/api/queries';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { GameCard } from '@/components/games/GameCard';
 import { Badge } from '@/components/ui/Badge';
+import { Heading } from '@/components/ui/Heading';
 
 export default function CourtDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -72,7 +73,7 @@ export default function CourtDetailScreen() {
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 32 }}>
         <View className="px-4 pt-4">
-          <Text className="font-display text-4xl text-cream mb-1">{court.name}</Text>
+          <Heading className="mb-1">{court.name}</Heading>
 
           <Pressable onPress={openDirections} className="flex-row items-center gap-1 mb-4">
             <Ionicons name="location-outline" size={14} color="#7A7870" />
@@ -110,7 +111,9 @@ export default function CourtDetailScreen() {
             <Marker coordinate={{ latitude: court.lat, longitude: court.lng }} />
           </MapView>
 
-          <Text className="font-display text-2xl text-cream mb-3">Games here</Text>
+          <Heading level={2} className="mb-3">
+            Games here
+          </Heading>
           {games.length === 0 ? (
             <Text className="text-muted font-sans text-sm">No upcoming games.</Text>
           ) : (

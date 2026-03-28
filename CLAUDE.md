@@ -38,7 +38,10 @@ Amber:        #F59E0B
 ```
 
 ### Typography
-- **Display/headings**: Bebas Neue (loaded via expo-font)
+- **Display/headings**: Bebas Neue (loaded via expo-font) — use the `<Heading>` component (`src/components/ui/Heading.tsx`), never raw `<Text>` with `font-display`
+  - `level={1}` (`text-4xl`) — page/screen titles
+  - `level={2}` (`text-2xl`) — section headers
+  - `level={3}` (`text-xl`) — subsection headers
 - **Body**: DM Sans
 
 ### Component conventions
@@ -80,7 +83,7 @@ src/
 │   ├── invitations.ts           # getMyInvitations, sendInvitation, respondToInvitation, searchInvitable, getGameInvitations
 │   └── profiles.ts              # getProfile, updateProfile
 ├── components/
-│   ├── ui/                      # Shared: Button, Input, Badge, Card, Avatar, LoadingScreen
+│   ├── ui/                      # Shared: Heading, Badge, FilterChips, Stars, CityPicker, ErrorState, FormInput
 │   ├── courts/                  # CourtCard, CourtPin
 │   ├── games/                   # GameCard, UpcomingGameCard, ScheduleGameCard, SectionHeader, PlayerSpots, SkillTag, GameHistoryRow
 │   └── profile/                 # ProfileIdentity, ProfileStats, ProfileRepSection

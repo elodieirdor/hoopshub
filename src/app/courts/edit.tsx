@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { Heading } from '@/components/ui/Heading';
 import * as Burnt from 'burnt';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -91,7 +92,7 @@ export default function EditCourtScreen() {
         className="mb-6 pb-5"
         style={{ borderBottomWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)' }}
       >
-        <Text className="font-display text-2xl text-cream">{court?.name}</Text>
+        <Heading level={2}>{court?.name}</Heading>
         <Text className="text-muted font-sans text-sm mt-1">{court?.address}</Text>
       </View>
 

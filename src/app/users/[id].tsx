@@ -9,6 +9,7 @@ import { ProfileStats } from '@/components/profile/ProfileStats';
 import { ProfileRepSection } from '@/components/profile/ProfileRepSection';
 import { SKILL_COLORS, formatDate } from '@/utils/formatters';
 import { Badge } from '@/components/ui/Badge';
+import { Heading } from '@/components/ui/Heading';
 import { userQueries } from '@/api/queries';
 
 const AVATAR_PALETTE = ['#3B82F6', '#22C55E', '#F59E0B', '#8B5CF6', '#06B6D4', '#EF4444'];
@@ -107,7 +108,9 @@ export default function PublicProfileScreen() {
               borderColor: 'rgba(255,255,255,0.08)',
             }}
           >
-            <Text className="font-display text-xl text-cream px-4 pt-4 pb-3">RECENT GAMES</Text>
+            <Heading level={3} className="px-4 pt-4 pb-3">
+              RECENT GAMES
+            </Heading>
             {!profile.recent_games?.length ? (
               <View className="px-4 pb-4">
                 <Text className="text-muted font-sans text-sm">No games played yet</Text>

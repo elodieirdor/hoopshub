@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Heading } from '@/components/ui/Heading';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,7 +37,7 @@ export default function ProfileScreen() {
     <View className="flex-1 bg-dark" style={{ paddingTop: top }}>
       {/* Fixed header */}
       <View className="flex-row items-center justify-between px-4 pt-4 pb-2">
-        <Text className="font-display text-4xl text-cream">PROFILE</Text>
+        <Heading>PROFILE</Heading>
         <Pressable onPress={() => setMenuOpen(true)} hitSlop={12}>
           <Ionicons name="ellipsis-vertical" size={20} color="#F0EDE8" />
         </Pressable>
@@ -76,7 +77,9 @@ export default function ProfileScreen() {
         </View>
 
         <View className="px-4 pt-2 pb-6">
-          <Text className="font-display text-2xl text-cream mb-4">RECENT GAMES</Text>
+          <Heading level={2} className="mb-4">
+            RECENT GAMES
+          </Heading>
           {user.recent_games.length === 0 ? (
             <View className="items-center py-8">
               <Ionicons name="basketball-outline" size={32} color="#7A7870" />

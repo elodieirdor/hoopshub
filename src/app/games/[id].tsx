@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { BasketballCourtSVG } from '@/components/games/BasketballCourtSVG';
 import { InvitePlayerModal } from '@/components/games/InvitePlayerModal';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Heading } from '@/components/ui/Heading';
 import { initials, formatDate, formatDuration, SKILL_COLORS } from '@/utils/formatters';
 
 const HERO_HEIGHT = 220;
@@ -203,9 +204,9 @@ export default function GameDetailScreen() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="px-4 pt-4">
           {/* Title */}
-          <Text className="font-display text-4xl text-cream mb-3" numberOfLines={2}>
+          <Heading className="mb-3" numberOfLines={2}>
             {game.title}
-          </Text>
+          </Heading>
 
           {/* Host row */}
           <View className="flex-row items-center gap-2 mb-5">
@@ -277,9 +278,9 @@ export default function GameDetailScreen() {
           </View>
 
           {/* Players section */}
-          <Text className="font-display text-2xl text-cream mb-3">
+          <Heading level={2} className="mb-3">
             Players ({filled}/{game.max_players})
-          </Text>
+          </Heading>
           <View
             className="rounded-xl mb-5"
             style={{
@@ -394,7 +395,9 @@ export default function GameDetailScreen() {
           {/* Description */}
           {game.description ? (
             <View>
-              <Text className="font-display text-2xl text-cream mb-2">About</Text>
+              <Heading level={2} className="mb-2">
+                About
+              </Heading>
               <Text className="text-muted font-sans text-sm leading-5">{game.description}</Text>
             </View>
           ) : null}

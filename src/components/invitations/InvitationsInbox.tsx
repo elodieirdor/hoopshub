@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
+import { Heading } from '@/components/ui/Heading';
 import { formatDate } from '@/utils/formatters';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invitationQueries } from '@/api/queries';
@@ -62,9 +63,9 @@ export function InvitationsInbox() {
   return (
     <View className="pt-4 pb-2">
       <View className="pl-4">
-        <Text className="font-display text-2xl text-cream mb-3">
+        <Heading level={2} className="mb-3">
           INVITATIONS ({invitations.length})
-        </Text>
+        </Heading>
       </View>
       <ScrollView horizontal contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4 }}>
         {invitations.map((invitation) => (
