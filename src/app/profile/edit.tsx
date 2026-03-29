@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,6 +30,7 @@ export default function EditProfileScreen() {
   const user = useAuthStore((s) => s.user)!;
   const setUser = useAuthStore((s) => s.setUser);
   const { setActiveCity, cities } = useLocationStore();
+  const { bottom } = useSafeAreaInsets();
 
   const [pendingAvatarUri, setPendingAvatarUri] = useState<string | null>(null);
 
@@ -84,28 +86,10 @@ export default function EditProfileScreen() {
 
   return (
     <View className="flex-1 bg-dark">
-      <Stack.Screen
-        options={{
-          title: 'EDIT PROFILE',
-          headerRight: () =>
-            saveMutation.isPending ? (
-              <ActivityIndicator size="small" color="#FF5C00" />
-            ) : (
-              <Pressable
-                onPress={handleSubmit((data) => saveMutation.mutate(data))}
-                hitSlop={12}
-                disabled={saveMutation.isPending}
-              >
-                <Text style={{ color: '#FF5C00', fontFamily: 'DMSans_600SemiBold', fontSize: 14 }}>
-                  Save
-                </Text>
-              </Pressable>
-            ),
-        }}
-      />
+      <Stack.Screen options={{ title: 'EDIT PROFILE' }} />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
         {/* Avatar */}
@@ -259,12 +243,22 @@ export default function EditProfileScreen() {
             )}
           />
         </View>
+      </ScrollView>
 
+      <View
+        style={{
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: bottom + 12,
+          borderTopWidth: 0.5,
+          borderColor: 'rgba(255,255,255,0.08)',
+          backgroundColor: '#0A0A0A',
+        }}
+      >
         <Pressable
           onPress={handleSubmit((data) => saveMutation.mutate(data))}
           disabled={saveMutation.isPending}
           style={{
-            marginTop: 32,
             backgroundColor: saveMutation.isPending ? '#7A7870' : '#FF5C00',
             borderRadius: 12,
             paddingVertical: 16,
@@ -279,7 +273,7 @@ export default function EditProfileScreen() {
             </Text>
           )}
         </Pressable>
-      </ScrollView>
+      </View>
     </View>
   );
 }

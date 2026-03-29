@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,6 +19,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function ChangeEmailScreen() {
   const setUser = useAuthStore((s) => s.setUser);
+  const { bottom } = useSafeAreaInsets();
 
   const {
     control,
@@ -38,28 +40,10 @@ export default function ChangeEmailScreen() {
 
   return (
     <View className="flex-1 bg-dark">
-      <Stack.Screen
-        options={{
-          title: 'CHANGE EMAIL',
-          headerRight: () =>
-            mutation.isPending ? (
-              <ActivityIndicator size="small" color="#FF5C00" />
-            ) : (
-              <Pressable
-                onPress={handleSubmit((data) => mutation.mutate(data))}
-                hitSlop={12}
-                disabled={mutation.isPending}
-              >
-                <Text style={{ color: '#FF5C00', fontFamily: 'DMSans_600SemiBold', fontSize: 14 }}>
-                  Save
-                </Text>
-              </Pressable>
-            ),
-        }}
-      />
+      <Stack.Screen options={{ title: 'CHANGE EMAIL' }} />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 48 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ gap: 16 }}>
@@ -96,12 +80,22 @@ export default function ChangeEmailScreen() {
             )}
           />
         </View>
+      </ScrollView>
 
+      <View
+        style={{
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: bottom + 12,
+          borderTopWidth: 0.5,
+          borderColor: 'rgba(255,255,255,0.08)',
+          backgroundColor: '#0A0A0A',
+        }}
+      >
         <Pressable
           onPress={handleSubmit((data) => mutation.mutate(data))}
           disabled={mutation.isPending}
           style={{
-            marginTop: 32,
             backgroundColor: mutation.isPending ? '#7A7870' : '#FF5C00',
             borderRadius: 12,
             paddingVertical: 16,
@@ -116,7 +110,7 @@ export default function ChangeEmailScreen() {
             </Text>
           )}
         </Pressable>
-      </ScrollView>
+      </View>
     </View>
   );
 }

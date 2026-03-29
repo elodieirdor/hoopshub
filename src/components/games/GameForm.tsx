@@ -11,6 +11,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Control,
   Controller,
@@ -135,6 +136,7 @@ export function GameForm({
   const [courtModalVisible, setCourtModalVisible] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const { bottom } = useSafeAreaInsets();
 
   const startsAt = watch('starts_at');
 
@@ -360,8 +362,18 @@ export function GameForm({
         {apiError && (
           <Text className="text-danger text-sm mb-4 font-sans text-center">{apiError}</Text>
         )}
+      </ScrollView>
 
-        {/* Submit */}
+      <View
+        style={{
+          paddingHorizontal: 24,
+          paddingTop: 12,
+          paddingBottom: bottom + 12,
+          borderTopWidth: 0.5,
+          borderColor: 'rgba(255,255,255,0.08)',
+          backgroundColor: '#0A0A0A',
+        }}
+      >
         <Pressable
           className="bg-orange rounded-xl py-4 items-center"
           onPress={handleSubmit(onSubmit)}
@@ -371,7 +383,7 @@ export function GameForm({
             {isSubmitting ? submittingLabel : submitLabel}
           </Text>
         </Pressable>
-      </ScrollView>
+      </View>
 
       {/* Court picker modal */}
       <Modal
