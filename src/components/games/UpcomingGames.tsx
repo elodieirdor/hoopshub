@@ -1,5 +1,5 @@
-import { Game } from '@/types';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Heading } from '@/components/ui/Heading';
 import { UpcomingGameCard } from '@/components/games/UpcomingGameCard';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -18,7 +18,9 @@ export default function UpcomingGames() {
   return (
     <View className="pt-4 pb-2">
       <View className="pl-4">
-        <Text className="font-display text-2xl text-cream mb-3">YOUR UPCOMING GAMES</Text>
+        <Heading level={2} className="mb-3">
+          YOUR UPCOMING GAMES
+        </Heading>
       </View>
       <ScrollView
         horizontal

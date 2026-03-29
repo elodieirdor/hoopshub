@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Pressable } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, router, Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GameForm, GameFormData, gameFormSchema } from '@/components/games/GameForm';
 import { createGame } from '@/api/games';
-import { courtQueries, gameQueries } from '@/api/queries';
+import { courtQueries } from '@/api/queries';
 import { Court } from '@/types';
 import { useLocationStore } from '@/store/locationStore';
 
 export default function CreateGameScreen() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { court_id: courtIdParam } = useLocalSearchParams<{ court_id?: string }>();
   const { activeCity } = useLocationStore();
@@ -80,23 +81,33 @@ export default function CreateGameScreen() {
   };
 
   return (
-    <GameForm
-      heading="POST A GAME"
-      onClose={() => router.back()}
-      control={control}
-      errors={errors}
-      handleSubmit={handleSubmit}
-      setValue={setValue}
-      watch={watch}
-      onSubmit={onSubmit}
-      submitLabel="Post game"
-      submittingLabel="Posting…"
-      isSubmitting={isSubmitting}
-      apiError={apiError}
-      courts={courts}
-      courtsLoading={courtsLoading}
-      selectedCourt={selectedCourt}
-      onSelectCourt={setSelectedCourt}
-    />
+    <>
+      <Stack.Screen
+        options={{
+          title: 'POST A GAME',
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()} hitSlop={12}>
+              <Ionicons name="close" size={24} color="#F0EDE8" />
+            </Pressable>
+          ),
+        }}
+      />
+      <GameForm
+        control={control}
+        errors={errors}
+        handleSubmit={handleSubmit}
+        setValue={setValue}
+        watch={watch}
+        onSubmit={onSubmit}
+        submitLabel="Post game"
+        submittingLabel="Posting…"
+        isSubmitting={isSubmitting}
+        apiError={apiError}
+        courts={courts}
+        courtsLoading={courtsLoading}
+        selectedCourt={selectedCourt}
+        onSelectCourt={setSelectedCourt}
+      />
+    </>
   );
 }

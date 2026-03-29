@@ -38,7 +38,10 @@ Amber:        #F59E0B
 ```
 
 ### Typography
-- **Display/headings**: Bebas Neue (loaded via expo-font)
+- **Display/headings**: Bebas Neue (loaded via expo-font) — use the `<Heading>` component (`src/components/ui/Heading.tsx`), never raw `<Text>` with `font-display`
+  - `level={1}` (`text-4xl`) — page/screen titles
+  - `level={2}` (`text-2xl`) — section headers
+  - `level={3}` (`text-xl`) — subsection headers
 - **Body**: DM Sans
 
 ### Component conventions
@@ -80,7 +83,7 @@ src/
 │   ├── invitations.ts           # getMyInvitations, sendInvitation, respondToInvitation, searchInvitable, getGameInvitations
 │   └── profiles.ts              # getProfile, updateProfile
 ├── components/
-│   ├── ui/                      # Shared: Button, Input, Badge, Card, Avatar, LoadingScreen
+│   ├── ui/                      # Shared: Heading, Badge, FilterChips, Stars, CityPicker, ErrorState, FormInput
 │   ├── courts/                  # CourtCard, CourtPin
 │   ├── games/                   # GameCard, UpcomingGameCard, ScheduleGameCard, SectionHeader, PlayerSpots, SkillTag, GameHistoryRow
 │   └── profile/                 # ProfileIdentity, ProfileStats, ProfileRepSection
@@ -152,6 +155,30 @@ completed: muted  (#7A7870)
 - Use `router.replace()` for auth redirects (no back stack)
 - Pass IDs via route params: `router.push('/games/123')`
 - Read params with `useLocalSearchParams()`
+
+### Native Stack Headers
+Stack screens use the native React Navigation header — never render a custom `View`-based header with a manual back button. Configure header options via `<Stack.Screen options={...} />` inside the screen component.
+
+Global header style is set in `app/_layout.tsx` (dark bg, cream tint, Bebas Neue title font). Per-screen overrides:
+```typescript
+// Title only
+<Stack.Screen options={{ title: 'SETTINGS' }} />
+
+// Title + right action (e.g. Save)
+<Stack.Screen options={{
+  title: 'EDIT PROFILE',
+  headerRight: () => <Pressable onPress={save}><Text>Save</Text></Pressable>,
+}} />
+
+// Custom left button (e.g. close instead of back)
+<Stack.Screen options={{
+  title: 'POST A GAME',
+  headerLeft: () => <Pressable onPress={router.back}><Ionicons name="close" /></Pressable>,
+}} />
+```
+
+**Exceptions — screens that keep custom headers:**
+- `(tabs)/index.tsx` and `(tabs)/profile.tsx` — `NativeTabs` screens have no Stack header; their inline header `View` is intentional.
 
 ## Common Patterns
 

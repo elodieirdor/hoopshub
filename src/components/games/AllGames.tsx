@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { gameQueries } from '@/api/queries';
 import { GameCard } from '@/components/games/GameCard';
 import { GameCardSkeleton } from '@/components/games/GameCardSkeleton';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Heading } from '@/components/ui/Heading';
 import { applyFilters, type FilterKey } from '@/utils/gameFilters';
 import { useLocationStore } from '@/store/locationStore';
 
@@ -44,7 +44,9 @@ export default function AllGames() {
   return (
     <View className="pt-4 pb-2">
       <View className="pl-4">
-        <Text className="font-display text-2xl text-cream mb-3">ALL GAMES</Text>
+        <Heading level={2} className="mb-3">
+          ALL GAMES
+        </Heading>
       </View>
 
       {/* Filter chips */}

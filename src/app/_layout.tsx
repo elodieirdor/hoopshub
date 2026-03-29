@@ -69,23 +69,18 @@ export default function RootLayout() {
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <Stack
             screenOptions={{
+              headerStyle: { backgroundColor: '#0A0A0A' },
+              headerTintColor: '#F0EDE8',
+              headerTitleStyle: { fontFamily: 'BebasNeue_400Regular', fontSize: 20 },
+              headerShadowVisible: false,
+              headerBackButtonDisplayMode: 'minimal',
               title: 'Loading...',
             }}
           >
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="courts/[id]" options={{ headerBackTitle: 'Courts' }} />
-            <Stack.Screen
-              name="courts/edit"
-              options={{ title: 'Edit court', headerBackTitle: 'Back' }}
-            />
-            <Stack.Screen name="games/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="games/create" options={{ headerShown: false }} />
-            <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
-            <Stack.Screen name="profile/email" options={{ headerShown: false }} />
-            <Stack.Screen name="profile/password" options={{ headerShown: false }} />
-            <Stack.Screen name="profile/settings" options={{ headerShown: false }} />
-            <Stack.Screen name="users/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="courts/[id]" />
+            <Stack.Screen name="courts/edit" options={{ title: 'Edit court' }} />
           </Stack>
           <StatusBar style="auto" />
         </ThemeProvider>

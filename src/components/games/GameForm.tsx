@@ -11,6 +11,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Control,
   Controller,
@@ -100,8 +101,6 @@ function PillSelector<T extends string | number>({ options, value, onChange }: P
 }
 
 type Props = {
-  heading: string;
-  onClose: () => void;
   control: Control<GameFormData>;
   errors: FieldErrors<GameFormData>;
   handleSubmit: UseFormHandleSubmit<GameFormData>;
@@ -119,8 +118,6 @@ type Props = {
 };
 
 export function GameForm({
-  heading,
-  onClose,
   control,
   errors,
   handleSubmit,
@@ -139,6 +136,7 @@ export function GameForm({
   const [courtModalVisible, setCourtModalVisible] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const { bottom } = useSafeAreaInsets();
 
   const startsAt = watch('starts_at');
 
@@ -149,17 +147,9 @@ export function GameForm({
     >
       <ScrollView
         className="flex-1 bg-dark"
-        contentContainerClassName="px-6 py-12"
+        contentContainerClassName="px-6 py-8"
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
-        <View className="flex-row items-center justify-between mb-8">
-          <Text className="font-display text-4xl text-cream">{heading}</Text>
-          <Pressable onPress={onClose} hitSlop={12}>
-            <Ionicons name="close" size={24} color="#F0EDE8" />
-          </Pressable>
-        </View>
-
         {/* Court selector */}
         <View className="mb-4">
           <Text className="text-cream font-sans text-sm mb-2">Court</Text>
@@ -372,8 +362,18 @@ export function GameForm({
         {apiError && (
           <Text className="text-danger text-sm mb-4 font-sans text-center">{apiError}</Text>
         )}
+      </ScrollView>
 
-        {/* Submit */}
+      <View
+        style={{
+          paddingHorizontal: 24,
+          paddingTop: 12,
+          paddingBottom: bottom + 12,
+          borderTopWidth: 0.5,
+          borderColor: 'rgba(255,255,255,0.08)',
+          backgroundColor: '#0A0A0A',
+        }}
+      >
         <Pressable
           className="bg-orange rounded-xl py-4 items-center"
           onPress={handleSubmit(onSubmit)}
@@ -383,7 +383,7 @@ export function GameForm({
             {isSubmitting ? submittingLabel : submitLabel}
           </Text>
         </Pressable>
-      </ScrollView>
+      </View>
 
       {/* Court picker modal */}
       <Modal

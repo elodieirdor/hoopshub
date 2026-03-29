@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import { Heading } from '@/components/ui/Heading';
 import { Stars } from '@/components/ui/Stars';
 import { User } from '@/types';
 
@@ -21,7 +22,9 @@ export function ProfileRepSection({ ratings, showValue = false }: Props) {
       className="rounded-xl"
       style={{ backgroundColor: '#181818', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}
     >
-      <Text className="font-display text-xl text-cream px-4 pt-4 pb-3">COMMUNITY REP</Text>
+      <Heading level={3} className="px-4 pt-4 pb-3">
+        COMMUNITY REP
+      </Heading>
       {ROWS.map((row) => {
         const value = ratings[row.key];
         return (

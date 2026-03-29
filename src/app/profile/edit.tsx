@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router, Stack } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import * as ImagePicker from 'expo-image-picker';
 import { useMutation } from '@tanstack/react-query';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/authStore';
 import { FormInput } from '@/components/ui/form-input';
@@ -27,11 +27,10 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function EditProfileScreen() {
-  const router = useRouter();
-  const { top } = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user)!;
   const setUser = useAuthStore((s) => s.setUser);
   const { setActiveCity, cities } = useLocationStore();
+  const { bottom } = useSafeAreaInsets();
 
   const [pendingAvatarUri, setPendingAvatarUri] = useState<string | null>(null);
 
@@ -86,31 +85,11 @@ export default function EditProfileScreen() {
   const avatarSource = pendingAvatarUri ?? user.avatar_url;
 
   return (
-    <View className="flex-1 bg-dark" style={{ paddingTop: top }}>
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-4">
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color="#F0EDE8" />
-        </Pressable>
-        <Text className="font-display text-xl text-cream">EDIT PROFILE</Text>
-        <Pressable
-          onPress={handleSubmit((data) => saveMutation.mutate(data))}
-          hitSlop={12}
-          disabled={saveMutation.isPending}
-        >
-          {saveMutation.isPending ? (
-            <ActivityIndicator size="small" color="#FF5C00" />
-          ) : (
-            <Text className="font-sans font-semibold text-sm" style={{ color: '#FF5C00' }}>
-              Save
-            </Text>
-          )}
-        </Pressable>
-      </View>
-
+    <View className="flex-1 bg-dark">
+      <Stack.Screen options={{ title: 'EDIT PROFILE' }} />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
         {/* Avatar */}
@@ -265,6 +244,36 @@ export default function EditProfileScreen() {
           />
         </View>
       </ScrollView>
+
+      <View
+        style={{
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: bottom + 12,
+          borderTopWidth: 0.5,
+          borderColor: 'rgba(255,255,255,0.08)',
+          backgroundColor: '#0A0A0A',
+        }}
+      >
+        <Pressable
+          onPress={handleSubmit((data) => saveMutation.mutate(data))}
+          disabled={saveMutation.isPending}
+          style={{
+            backgroundColor: saveMutation.isPending ? '#7A7870' : '#FF5C00',
+            borderRadius: 12,
+            paddingVertical: 16,
+            alignItems: 'center',
+          }}
+        >
+          {saveMutation.isPending ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={{ color: '#fff', fontFamily: 'DMSans_600SemiBold', fontSize: 16 }}>
+              Save
+            </Text>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }

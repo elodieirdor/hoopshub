@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router, Stack } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { FormInput } from '@/components/ui/form-input';
 import { updatePassword } from '@/api/users';
 
@@ -24,9 +23,7 @@ const schema = z
 type FormData = z.infer<typeof schema>;
 
 export default function ChangePasswordScreen() {
-  const router = useRouter();
-  const { top } = useSafeAreaInsets();
-
+  const { bottom } = useSafeAreaInsets();
   const {
     control,
     handleSubmit,
@@ -46,30 +43,11 @@ export default function ChangePasswordScreen() {
   });
 
   return (
-    <View className="flex-1 bg-dark" style={{ paddingTop: top }}>
-      <View className="flex-row items-center justify-between px-4 py-4">
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color="#F0EDE8" />
-        </Pressable>
-        <Text className="font-display text-xl text-cream">CHANGE PASSWORD</Text>
-        <Pressable
-          onPress={handleSubmit((data) => mutation.mutate(data))}
-          hitSlop={12}
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending ? (
-            <ActivityIndicator size="small" color="#FF5C00" />
-          ) : (
-            <Text className="font-sans font-semibold text-sm" style={{ color: '#FF5C00' }}>
-              Save
-            </Text>
-          )}
-        </Pressable>
-      </View>
-
+    <View className="flex-1 bg-dark">
+      <Stack.Screen options={{ title: 'CHANGE PASSWORD' }} />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 48 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ gap: 16 }}>
@@ -120,6 +98,36 @@ export default function ChangePasswordScreen() {
           />
         </View>
       </ScrollView>
+
+      <View
+        style={{
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: bottom + 12,
+          borderTopWidth: 0.5,
+          borderColor: 'rgba(255,255,255,0.08)',
+          backgroundColor: '#0A0A0A',
+        }}
+      >
+        <Pressable
+          onPress={handleSubmit((data) => mutation.mutate(data))}
+          disabled={mutation.isPending}
+          style={{
+            backgroundColor: mutation.isPending ? '#7A7870' : '#FF5C00',
+            borderRadius: 12,
+            paddingVertical: 16,
+            alignItems: 'center',
+          }}
+        >
+          {mutation.isPending ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={{ color: '#fff', fontFamily: 'DMSans_600SemiBold', fontSize: 16 }}>
+              Save
+            </Text>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
