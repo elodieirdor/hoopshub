@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { Heading } from '@/components/ui/Heading';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +21,15 @@ import { ProfileRepSection } from '@/components/profile/ProfileRepSection';
 export default function ProfileScreen() {
   const { top, bottom } = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+  const loadUser = useAuthStore((s) => s.loadUser);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadUser();
+    setRefreshing(false);
+  };
 
   if (!user) {
     return (
@@ -46,9 +62,9 @@ export default function ProfileScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: bottom + 32 }}
-        // refreshControl={
-        //   <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />
-        // }
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF5C00" />
+        }
       >
         <ProfileIdentity user={user} />
 

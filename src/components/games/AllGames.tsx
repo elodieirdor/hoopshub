@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { gameQueries } from '@/api/queries';
 import { GameCard } from '@/components/games/GameCard';
@@ -77,11 +78,17 @@ export default function AllGames() {
           ListEmptyComponent={
             <View className="items-center pt-16 px-8">
               <Text className="text-muted font-sans text-center mb-3">
-                {activeFilters.size > 0 ? 'No games match your filters.' : 'No games found.'}
+                {activeFilters.size > 0
+                  ? 'No games match your filters.'
+                  : 'No games found — post one!'}
               </Text>
-              {activeFilters.size > 0 && (
+              {activeFilters.size > 0 ? (
                 <Pressable className="self-center" onPress={() => setActiveFilters(new Set())}>
                   <Text className="text-orange font-sans text-sm">Clear filters</Text>
+                </Pressable>
+              ) : (
+                <Pressable className="self-center" onPress={() => router.push('/games/create')}>
+                  <Text className="text-orange font-sans text-sm">Post a game</Text>
                 </Pressable>
               )}
             </View>

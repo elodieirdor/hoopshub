@@ -84,8 +84,8 @@ src/
 │   └── profiles.ts              # getProfile, updateProfile
 ├── components/
 │   ├── ui/                      # Shared: Heading, Badge, FilterChips, Stars, CityPicker, ErrorState, FormInput
-│   ├── courts/                  # CourtCard, CourtPin
-│   ├── games/                   # GameCard, UpcomingGameCard, ScheduleGameCard, SectionHeader, PlayerSpots, SkillTag, GameHistoryRow
+│   ├── courts/                  # CourtCard, CourtPin, CourtCardSkeleton, CourtDetailSkeleton, MapSkeleton
+│   ├── games/                   # GameCard, GameCardSkeleton, GameDetailSkeleton, UpcomingGameCard, PlayerSpots, SkillTag, GameHistoryRow
 │   └── profile/                 # ProfileIdentity, ProfileStats, ProfileRepSection
 ├── hooks/
 │   ├── useGames.ts
@@ -225,15 +225,65 @@ const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
 });
 ```
 
+### UX States
+
+Every screen that fetches data must handle all three states.
+
+**Loading — use skeleton components, not spinners**
+```typescript
+// List screens: render N skeleton cards
+if (isLoading) return <View>{Array.from({length:3}).map((_,i) => <GameCardSkeleton key={i} />)}</View>;
+
+// Detail screens: use the dedicated full-screen skeleton
+if (isLoading) return <GameDetailSkeleton />;   // or <CourtDetailSkeleton />
+```
+Skeleton components live next to their real counterparts (`GameCardSkeleton`, `GameDetailSkeleton`, `CourtCardSkeleton`, `CourtDetailSkeleton`, `MapSkeleton`). All use `useShimmer()` (`src/hooks/use-shimmer.ts`) for the opacity pulse.
+
+**Error — use `<ErrorState>` with a retry**
+```typescript
+import { ErrorState } from '@/components/ui/ErrorState';
+
+if (error || !data) {
+  return (
+    <View className="flex-1 bg-dark">
+      <ErrorState message="Can't connect — check your connection" onRetry={refetch} />
+    </View>
+  );
+}
+```
+
+**Empty — icon + message + optional CTA**
+```typescript
+// In FlatList:
+ListEmptyComponent={
+  <View className="items-center pt-16 px-8">
+    <Ionicons name="basketball-outline" size={32} color="#7A7870" />
+    <Text className="text-muted font-sans text-center mt-3">No games yet.</Text>
+    <Pressable onPress={() => router.push('/games/create')}>
+      <Text className="text-orange font-sans text-sm mt-2">Post a game</Text>
+    </Pressable>
+  </View>
+}
+```
+
 ### Pull to refresh
+
+**React Query screens** — use `isRefetching` directly, no extra state:
+```typescript
+const { data, isRefetching, refetch } = useQuery(gameQueries.detail(id));
+
+// On ScrollView or FlatList:
+refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />}
+```
+
+**Non-React Query screens** (e.g. profile, which reads from authStore):
 ```typescript
 const [refreshing, setRefreshing] = useState(false);
 const onRefresh = async () => {
   setRefreshing(true);
-  await fetchData();
+  await loadUser();
   setRefreshing(false);
 };
-// Add to ScrollView/FlatList:
 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF5C00" />}
 ```
 

@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, Image } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+  Image,
+  RefreshControl,
+} from 'react-native';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +17,7 @@ import { respondToInvitation } from '@/api/invitations';
 import { gameQueries, invitationQueries } from '@/api/queries';
 import { useAuthStore } from '@/store/authStore';
 import { BasketballCourtSVG } from '@/components/games/BasketballCourtSVG';
+import { GameDetailSkeleton } from '@/components/games/GameDetailSkeleton';
 import { InvitePlayerModal } from '@/components/games/InvitePlayerModal';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Heading } from '@/components/ui/Heading';
@@ -22,7 +32,13 @@ export default function GameDetailScreen() {
   const currentUser = useAuthStore((s) => s.user);
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
 
-  const { data: game, isLoading: loading, error, refetch } = useQuery(gameQueries.detail(id!));
+  const {
+    data: game,
+    isLoading: loading,
+    isRefetching,
+    error,
+    refetch,
+  } = useQuery(gameQueries.detail(id!));
 
   const isPlayerInGame =
     !!game && !!currentUser && game.game_players?.some((p) => p.player_id === currentUser.id);
@@ -77,11 +93,7 @@ export default function GameDetailScreen() {
   });
 
   if (loading) {
-    return (
-      <View className="flex-1 bg-dark justify-center items-center">
-        <ActivityIndicator color="#FF5C00" />
-      </View>
-    );
+    return <GameDetailSkeleton />;
   }
 
   if (error || !game) {
@@ -201,7 +213,13 @@ export default function GameDetailScreen() {
         </View>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />
+        }
+      >
         <View className="px-4 pt-4">
           {/* Title */}
           <Heading className="mb-3" numberOfLines={2}>
