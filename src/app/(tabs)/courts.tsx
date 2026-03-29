@@ -26,6 +26,7 @@ import { haversineKm } from '@/utils/geo';
 import CourtCardSkeleton from '@/components/courts/CourtCardSkeleton';
 import MapSkeleton from '@/components/courts/MapSkeleton';
 import { useLocationStore } from '@/store/locationStore';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ export default function CourtsScreen() {
     data: courts = [],
     isLoading: loading,
     isRefetching: refreshing,
+    error: courtsError,
     refetch,
   } = useQuery(courtQueries.list(activeCity));
 
@@ -309,8 +311,14 @@ export default function CourtsScreen() {
                   <CourtCardSkeleton key={i} />
                 ))}
               </View>
+            ) : courtsError ? (
+              <View className="flex-1">
+                <ErrorState message="Can't connect — check your connection" onRetry={refetch} />
+              </View>
             ) : (
-              <Text className="text-muted text-center font-sans mt-8">No courts found</Text>
+              <Text className="text-muted text-center font-sans mt-8">
+                No courts found in your area
+              </Text>
             )
           }
         />

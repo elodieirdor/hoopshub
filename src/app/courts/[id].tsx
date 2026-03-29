@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,12 +9,20 @@ import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { GameCard } from '@/components/games/GameCard';
 import { Badge } from '@/components/ui/Badge';
 import { Heading } from '@/components/ui/Heading';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { CourtDetailSkeleton } from '@/components/courts/CourtDetailSkeleton';
 
 export default function CourtDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const courtId = Number(id);
 
-  const { data: court, isLoading } = useQuery(courtQueries.detail(courtId));
+  const {
+    data: court,
+    isLoading,
+    isRefetching,
+    error,
+    refetch,
+  } = useQuery(courtQueries.detail(courtId));
 
   const { data: allGames = [] } = useQuery(gameQueries.forCourt(courtId));
 
@@ -31,10 +39,14 @@ export default function CourtDetailScreen() {
     Linking.openURL(`https://maps.google.com/?q=${court.lat},${court.lng}`);
   };
 
-  if (isLoading || !court) {
+  if (isLoading) {
+    return <CourtDetailSkeleton />;
+  }
+
+  if (error || !court) {
     return (
-      <View className="flex-1 bg-dark justify-center items-center">
-        <Text className="text-muted font-sans">Loading…</Text>
+      <View className="flex-1 bg-dark">
+        <ErrorState message="Can't connect — check your connection" onRetry={refetch} />
       </View>
     );
   }
@@ -71,7 +83,13 @@ export default function CourtDetailScreen() {
         </View>
       )}
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 32 }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF5C00" />
+        }
+      >
         <View className="px-4 pt-4">
           <Heading className="mb-1">{court.name}</Heading>
 
