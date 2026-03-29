@@ -44,6 +44,7 @@ export interface Court {
   lit: boolean;
   is_free: boolean;
   images: string[] | undefined;
+  is_favorited: boolean;
 }
 
 export interface Game {

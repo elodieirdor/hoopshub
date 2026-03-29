@@ -27,3 +27,13 @@ export const updateCourt = async (id: number, data: Partial<Court>) => {
   const res = await client.put<Court>(`/courts/${id}`, data);
   return res.data;
 };
+
+export const addToFavorite = async (courtId: number): Promise<{ favorited: boolean }> => {
+  const res = await client.post<{ favorited: boolean }>(`/courts/${courtId}/favorite`);
+  return res.data;
+};
+
+export const destroyFavorite = async (courtId: number): Promise<{ favorited: boolean }> => {
+  const res = await client.delete<{ favorited: boolean }>(`/courts/${courtId}/favorite`);
+  return res.data;
+};
