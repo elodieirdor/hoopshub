@@ -19,6 +19,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
+import { useAppUpdates } from '@/hooks/useAppUpdates';
+import { UpdatePrompt } from '@/components/ui/UpdatePrompt';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -45,6 +47,7 @@ export default function RootLayout() {
 
   const { isAuthenticated, isLoading, loadUser } = useAuthStore();
   const initLocation = useLocationStore((s) => s.init);
+  const { updateState, openStore, applyOta, dismissOta } = useAppUpdates();
 
   useEffect(() => {
     loadUser();
@@ -83,6 +86,12 @@ export default function RootLayout() {
             <Stack.Screen name="courts/edit" options={{ title: 'Edit court' }} />
           </Stack>
           <StatusBar style="auto" />
+          {updateState.status === 'store-required' && (
+            <UpdatePrompt variant="store" onUpdate={openStore} />
+          )}
+          {updateState.status === 'ota-ready' && (
+            <UpdatePrompt variant="ota" onRestart={applyOta} onDismiss={dismissOta} />
+          )}
         </ThemeProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>
