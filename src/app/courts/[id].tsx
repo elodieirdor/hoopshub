@@ -1,9 +1,18 @@
 import React, { useMemo } from 'react';
-import { Image, Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import {
+  Image,
+  Linking,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { courtQueries, gameQueries } from '@/api/queries';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
 import { GameCard } from '@/components/games/GameCard';
@@ -11,6 +20,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Heading } from '@/components/ui/Heading';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { CourtDetailSkeleton } from '@/components/courts/CourtDetailSkeleton';
+import { addToFavorite, destroyFavorite } from '@/api/courts';
+import * as Burnt from 'burnt';
 
 export default function CourtDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -34,9 +45,38 @@ export default function CourtDetailScreen() {
     [allGames],
   );
 
+  const queryClient = useQueryClient();
+
   const openDirections = () => {
     if (!court) return;
     Linking.openURL(`https://maps.google.com/?q=${court.lat},${court.lng}`);
+  };
+
+  const { queryKey } = courtQueries.detail(courtId);
+
+  const favoriteMutation = useMutation({
+    mutationFn: (newState: boolean) =>
+      newState ? addToFavorite(courtId) : destroyFavorite(courtId),
+    onMutate: async (newState) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: typeof court) =>
+        old ? { ...old, is_favorited: newState } : old,
+      );
+      return { previous };
+    },
+    onError: (_err, _newState, context) => {
+      queryClient.setQueryData(queryKey, context?.previous);
+      Burnt.toast({ title: 'Something went wrong', preset: 'error' });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const handleFavorite = () => {
+    if (!court) return;
+    favoriteMutation.mutate(!court.is_favorited);
   };
 
   if (isLoading) {
@@ -56,13 +96,39 @@ export default function CourtDetailScreen() {
       <Stack.Screen
         options={{
           title: court.name,
-          headerRight: () => (
-            <Pressable onPress={() => router.push({ pathname: '/courts/edit', params: { id } })}>
-              <Ionicons name="create-outline" size={22} color="#FF5C00" />
-            </Pressable>
-          ),
+          headerRight:
+            Platform.OS === 'android'
+              ? () => (
+                  <View style={{ flexDirection: 'row', gap: 16 }}>
+                    <Pressable
+                      onPress={() => router.push({ pathname: '/courts/edit', params: { id } })}
+                    >
+                      <Ionicons name="create-outline" size={22} color="#FF5C00" />
+                    </Pressable>
+                    <Pressable onPress={handleFavorite}>
+                      <Ionicons
+                        name={court.is_favorited ? 'heart' : 'heart-outline'}
+                        size={22}
+                        color={court.is_favorited ? '#FF5C00' : '#7A7870'}
+                      />
+                    </Pressable>
+                  </View>
+                )
+              : undefined,
         }}
       />
+      {Platform.OS === 'ios' && (
+        <Stack.Toolbar placement="right">
+          <Stack.Toolbar.Button
+            icon="pencil"
+            onPress={() => router.push({ pathname: '/courts/edit', params: { id } })}
+          />
+          <Stack.Toolbar.Button
+            icon={court.is_favorited ? 'heart.fill' : 'heart'}
+            onPress={handleFavorite}
+          />
+        </Stack.Toolbar>
+      )}
 
       {court.images && court.images.length > 0 ? (
         <Image

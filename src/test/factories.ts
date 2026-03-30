@@ -45,6 +45,7 @@ export const makeCourt = (overrides: Partial<Court> = {}): Court => ({
   lit: true,
   is_free: false,
   images: [],
+  is_favorited: false,
   ...overrides,
 });
 

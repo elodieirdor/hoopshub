@@ -1,4 +1,4 @@
-import { getCourts, getCourt } from '../courts';
+import { getCourts, getCourt, addToFavorite, destroyFavorite } from '../courts';
 import client from '../client';
 import { makeCourt } from '@/test/factories';
 
@@ -56,5 +56,27 @@ describe('getCourt', () => {
 
     expect(mockedClient.get).toHaveBeenCalledWith('/courts/1');
     expect(result).toEqual(mockCourt);
+  });
+});
+
+describe('addToFavorite', () => {
+  it('posts to the favorite endpoint and returns the response', async () => {
+    mockedClient.post = jest.fn().mockResolvedValue({ data: { favorited: true } });
+
+    const result = await addToFavorite(42);
+
+    expect(mockedClient.post).toHaveBeenCalledWith('/courts/42/favorite');
+    expect(result).toEqual({ favorited: true });
+  });
+});
+
+describe('destroyFavorite', () => {
+  it('deletes the favorite and returns the response', async () => {
+    mockedClient.delete = jest.fn().mockResolvedValue({ data: { favorited: false } });
+
+    const result = await destroyFavorite(42);
+
+    expect(mockedClient.delete).toHaveBeenCalledWith('/courts/42/favorite');
+    expect(result).toEqual({ favorited: false });
   });
 });
