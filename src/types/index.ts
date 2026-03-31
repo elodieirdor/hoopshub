@@ -47,6 +47,9 @@ export interface Court {
   is_favorited: boolean;
 }
 
+export const GAME_TYPES = ['3v3', '5v5', 'casual', 'sub_needed'] as const;
+export type GameType = (typeof GAME_TYPES)[number];
+
 export interface Game {
   id: number;
   host_id: number;
@@ -57,7 +60,7 @@ export interface Game {
   duration_mins: number;
   max_players: number;
   skill_level: 'beginner' | 'intermediate' | 'advanced' | 'comp' | 'any';
-  game_type: '3v3' | '5v5' | 'casual' | 'sub_needed';
+  game_type: GameType;
   status: 'open' | 'full' | 'cancelled' | 'completed';
   created_at: string;
   host: User;

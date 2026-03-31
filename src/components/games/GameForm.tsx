@@ -24,7 +24,7 @@ import { z } from 'zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { FormInput } from '@/components/ui/form-input';
-import { Court } from '@/types';
+import { Court, GAME_TYPES } from '@/types';
 import {useQueryClient} from "@tanstack/react-query";
 import {useLocalSearchParams} from "expo-router";
 
@@ -36,7 +36,7 @@ export const gameFormSchema = z.object({
   duration_mins: z.number(),
   max_players: z.number(),
   skill_level: z.enum(['beginner', 'intermediate', 'advanced', 'comp', 'any']),
-  game_type: z.enum(['3v3', '5v5', 'casual', 'sub_needed']),
+  game_type: z.enum(GAME_TYPES),
 });
 
 export type GameFormData = z.infer<typeof gameFormSchema>;
@@ -70,7 +70,7 @@ const SKILL_LEVELS: { value: GameFormData['skill_level']; label: string }[] = [
   { value: 'any', label: 'Any' },
 ];
 
-const GAME_TYPES: { value: GameFormData['game_type']; label: string }[] = [
+const GAME_TYPE_OPTIONS: { value: GameFormData['game_type']; label: string }[] = [
   { value: '3v3', label: '3v3' },
   { value: '5v5', label: '5v5' },
   { value: 'casual', label: 'Casual' },
@@ -342,7 +342,7 @@ export function GameForm({
             control={control}
             name="game_type"
             render={({ field: { onChange, value } }) => (
-              <PillSelector options={GAME_TYPES} value={value} onChange={onChange} />
+              <PillSelector options={GAME_TYPE_OPTIONS} value={value} onChange={onChange} />
             )}
           />
         </View>
