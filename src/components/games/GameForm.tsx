@@ -25,6 +25,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { FormInput } from '@/components/ui/form-input';
 import { Court } from '@/types';
+import {useQueryClient} from "@tanstack/react-query";
+import {useLocalSearchParams} from "expo-router";
 
 export const gameFormSchema = z.object({
   court_id: z.number({ error: 'Select a court' }),
@@ -34,7 +36,7 @@ export const gameFormSchema = z.object({
   duration_mins: z.number(),
   max_players: z.number(),
   skill_level: z.enum(['beginner', 'intermediate', 'advanced', 'comp', 'any']),
-  game_type: z.enum(['3v3', '5v5', 'casual']),
+  game_type: z.enum(['3v3', '5v5', 'casual', 'sub_needed']),
 });
 
 export type GameFormData = z.infer<typeof gameFormSchema>;
@@ -51,6 +53,13 @@ const MAX_PLAYERS: { value: number; label: string }[] = [
   { value: 8, label: '8' },
   { value: 10, label: '10' },
   { value: 12, label: '12' },
+];
+
+const SUB_NEEDED_MAX_PLAYERS: { value: number; label: string }[] = [
+  { value: 1, label: '1' },
+  { value: 2, label: '2' },
+  { value: 3, label: '3' },
+  { value: 4, label: '4' },
 ];
 
 const SKILL_LEVELS: { value: GameFormData['skill_level']; label: string }[] = [
@@ -133,6 +142,10 @@ export function GameForm({
   selectedCourt,
   onSelectCourt,
 }: Props) {
+
+  const { type } = useLocalSearchParams<{ type?: string }>();
+  const isSubNeeded   = type === 'sub_needed';
+
   const [courtModalVisible, setCourtModalVisible] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -301,7 +314,7 @@ export function GameForm({
             control={control}
             name="max_players"
             render={({ field: { onChange, value } }) => (
-              <PillSelector options={MAX_PLAYERS} value={value} onChange={onChange} />
+              <PillSelector options={isSubNeeded ? SUB_NEEDED_MAX_PLAYERS : MAX_PLAYERS} value={value} onChange={onChange} />
             )}
           />
         </View>
@@ -322,6 +335,7 @@ export function GameForm({
         </View>
 
         {/* Game type */}
+        {!isSubNeeded &&
         <View className="mb-6">
           <Text className="text-cream font-sans text-sm mb-3">Game type</Text>
           <Controller
@@ -332,6 +346,7 @@ export function GameForm({
             )}
           />
         </View>
+        }
 
         {/* Description */}
         <View className="mb-8">
@@ -343,7 +358,7 @@ export function GameForm({
               <View className="bg-surface rounded-xl px-4 py-3">
                 <TextInput
                   className="text-cream font-sans text-base"
-                  placeholder="Any extra details…"
+                  placeholder={isSubNeeded ? "Team name, league, any details..." : "Any extra details…"}
                   placeholderTextColor="#7A7870"
                   multiline
                   numberOfLines={3}

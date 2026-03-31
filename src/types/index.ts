@@ -57,7 +57,7 @@ export interface Game {
   duration_mins: number;
   max_players: number;
   skill_level: 'beginner' | 'intermediate' | 'advanced' | 'comp' | 'any';
-  game_type: '3v3' | '5v5' | 'casual';
+  game_type: '3v3' | '5v5' | 'casual' | 'sub_needed';
   status: 'open' | 'full' | 'cancelled' | 'completed';
   created_at: string;
   host: User;
