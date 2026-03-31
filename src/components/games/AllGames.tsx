@@ -10,6 +10,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Heading } from '@/components/ui/Heading';
 import { applyFilters, type FilterKey } from '@/utils/gameFilters';
 import { useLocationStore } from '@/store/locationStore';
+import { Game } from '@/types';
 
 const CHIPS: { key: FilterKey; label: string }[] = [
   { key: 'sub_needed', label: 'Subs needed' },
@@ -20,7 +21,11 @@ const CHIPS: { key: FilterKey; label: string }[] = [
   { key: 'nearme', label: 'Near me' },
 ];
 
-export default function AllGames() {
+interface AllGamesProps {
+  onPressPostGames: () => void;
+}
+
+export default function AllGames({ onPressPostGames }: AllGamesProps) {
   const { activeCity, locationReady } = useLocationStore();
 
   const {
@@ -91,7 +96,7 @@ export default function AllGames() {
                   <Text className="text-orange font-sans text-sm">Clear filters</Text>
                 </Pressable>
               ) : (
-                <Pressable className="self-center" onPress={() => router.push('/games/create')}>
+                <Pressable className="self-center" onPress={onPressPostGames}>
                   <Text className="text-orange font-sans text-sm">Post a game</Text>
                 </Pressable>
               )}

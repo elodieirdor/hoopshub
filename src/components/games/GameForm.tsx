@@ -25,8 +25,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { FormInput } from '@/components/ui/form-input';
 import { Court, GAME_TYPES } from '@/types';
-import {useQueryClient} from "@tanstack/react-query";
-import {useLocalSearchParams} from "expo-router";
+import { useQueryClient } from '@tanstack/react-query';
+import { useLocalSearchParams } from 'expo-router';
 
 export const gameFormSchema = z.object({
   court_id: z.number({ error: 'Select a court' }),
@@ -142,9 +142,8 @@ export function GameForm({
   selectedCourt,
   onSelectCourt,
 }: Props) {
-
   const { type } = useLocalSearchParams<{ type?: string }>();
-  const isSubNeeded   = type === 'sub_needed';
+  const isSubNeeded = type === 'sub_needed';
 
   const [courtModalVisible, setCourtModalVisible] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -309,12 +308,18 @@ export function GameForm({
 
         {/* Max players */}
         <View className="mb-4">
-          <Text className="text-cream font-sans text-sm mb-3">Max players</Text>
+          <Text className="text-cream font-sans text-sm mb-3">
+            {isSubNeeded ? `Number of subs needed` : `Max players`}
+          </Text>
           <Controller
             control={control}
             name="max_players"
             render={({ field: { onChange, value } }) => (
-              <PillSelector options={isSubNeeded ? SUB_NEEDED_MAX_PLAYERS : MAX_PLAYERS} value={value} onChange={onChange} />
+              <PillSelector
+                options={isSubNeeded ? SUB_NEEDED_MAX_PLAYERS : MAX_PLAYERS}
+                value={value}
+                onChange={onChange}
+              />
             )}
           />
         </View>
@@ -335,18 +340,18 @@ export function GameForm({
         </View>
 
         {/* Game type */}
-        {!isSubNeeded &&
-        <View className="mb-6">
-          <Text className="text-cream font-sans text-sm mb-3">Game type</Text>
-          <Controller
-            control={control}
-            name="game_type"
-            render={({ field: { onChange, value } }) => (
-              <PillSelector options={GAME_TYPE_OPTIONS} value={value} onChange={onChange} />
-            )}
-          />
-        </View>
-        }
+        {!isSubNeeded && (
+          <View className="mb-6">
+            <Text className="text-cream font-sans text-sm mb-3">Game type</Text>
+            <Controller
+              control={control}
+              name="game_type"
+              render={({ field: { onChange, value } }) => (
+                <PillSelector options={GAME_TYPE_OPTIONS} value={value} onChange={onChange} />
+              )}
+            />
+          </View>
+        )}
 
         {/* Description */}
         <View className="mb-8">
@@ -358,7 +363,9 @@ export function GameForm({
               <View className="bg-surface rounded-xl px-4 py-3">
                 <TextInput
                   className="text-cream font-sans text-base"
-                  placeholder={isSubNeeded ? "Team name, league, any details..." : "Any extra details…"}
+                  placeholder={
+                    isSubNeeded ? 'Team name, league, any details...' : 'Any extra details…'
+                  }
                   placeholderTextColor="#7A7870"
                   multiline
                   numberOfLines={3}

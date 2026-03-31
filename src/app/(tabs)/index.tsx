@@ -33,7 +33,7 @@ export default function GamesScreen() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View className="flex-1">
       <View className="flex-1 bg-dark" style={{ paddingTop: top, paddingBottom: bottom }}>
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 pt-4 pb-2">
@@ -51,7 +51,7 @@ export default function GamesScreen() {
 
           <InvitationsInbox />
 
-          <AllGames />
+          <AllGames onPressPostGames={() => setModalVisible(true)} />
         </ScrollView>
       </View>
 
@@ -68,64 +68,37 @@ export default function GamesScreen() {
         >
           <Pressable onPress={() => {}}>
             <View
-              style={{
-                backgroundColor: '#181818',
-                borderTopLeftRadius: 20,
-                borderTopRightRadius: 20,
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.08)',
-                paddingHorizontal: 20,
-                paddingBottom: bottom + 24,
-                paddingTop: 12,
-              }}
+              className="bg-surface border border-border rounded-t-[20px] px-4 pt-3"
+              style={{ paddingBottom: bottom }}
             >
               {/* Handle */}
               <View
-                style={{
-                  width: 36,
-                  height: 4,
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  borderRadius: 2,
-                  alignSelf: 'center',
-                  marginBottom: 20,
-                }}
+                className="w-9 h-1 rounded-sm self-center mb-5"
+                style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
               />
 
-              <Heading level={2} style={{ marginBottom: 16 }}>WHAT DO YOU NEED?</Heading>
+              <Heading level={2} style={{ marginBottom: 16 }}>
+                WHAT DO YOU NEED?
+              </Heading>
 
-              <View style={{ gap: 12 }}>
+              <View className="gap-3">
                 {OPTIONS.map((option) => (
                   <Pressable
                     key={option.title}
                     onPress={() => handleSelect(option.route)}
-                    style={({ pressed }) => ({
-                      backgroundColor: pressed ? '#202020' : '#202020',
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: 'rgba(255,255,255,0.08)',
-                      padding: 16,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 14,
-                    })}
+                    className="bg-surface-2 rounded-xl border border-border p-4 flex-row items-center gap-[14px]"
                   >
                     <View
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 22,
-                        backgroundColor: 'rgba(255,92,0,0.12)',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                      className="w-11 h-11 rounded-full items-center justify-center"
+                      style={{ backgroundColor: 'rgba(255,92,0,0.12)' }}
                     >
                       <Ionicons name={option.icon} size={22} color="#FF5C00" />
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: '#F0EDE8', fontFamily: 'DMSans', fontWeight: '600', fontSize: 16 }}>
+                    <View className="flex-1">
+                      <Text className="text-cream font-sans font-semibold text-base">
                         {option.title}
                       </Text>
-                      <Text style={{ color: '#7A7870', fontFamily: 'DMSans', fontSize: 13, marginTop: 2 }}>
+                      <Text className="text-muted font-sans text-[13px] mt-0.5">
                         {option.description}
                       </Text>
                     </View>

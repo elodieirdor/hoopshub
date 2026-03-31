@@ -1,4 +1,4 @@
-import {Game} from '@/types';
+import { Game } from '@/types';
 
 export type FilterKey = 'today' | 'weekend' | 'intermediate' | '3v3' | 'nearme' | 'sub_needed';
 
