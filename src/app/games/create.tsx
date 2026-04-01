@@ -12,6 +12,9 @@ import { Court } from '@/types';
 import { useLocationStore } from '@/store/locationStore';
 
 export default function CreateGameScreen() {
+  const { type } = useLocalSearchParams<{ type?: string }>();
+  const isSubNeeded = type === 'sub_needed';
+
   const queryClient = useQueryClient();
   const { court_id: courtIdParam } = useLocalSearchParams<{ court_id?: string }>();
   const { activeCity } = useLocationStore();
@@ -33,7 +36,7 @@ export default function CreateGameScreen() {
       duration_mins: 90,
       max_players: 10,
       skill_level: 'any',
-      game_type: 'casual',
+      game_type: isSubNeeded ? 'sub_needed' : 'casual',
       starts_at: (() => {
         const d = new Date();
         d.setMinutes(0, 0, 0);
@@ -99,7 +102,7 @@ export default function CreateGameScreen() {
         setValue={setValue}
         watch={watch}
         onSubmit={onSubmit}
-        submitLabel="Post game"
+        submitLabel={isSubNeeded ? 'Post sub request' : 'Post game'}
         submittingLabel="Posting…"
         isSubmitting={isSubmitting}
         apiError={apiError}

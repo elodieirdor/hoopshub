@@ -11,6 +11,7 @@ import { initials, formatDate, formatDuration } from '@/utils/formatters';
 function statusLabel(game: Game): { label: string; color: string } {
   if (game.status === 'cancelled') return { label: 'Cancelled', color: '#7A7870' };
   if (game.status === 'completed') return { label: 'Completed', color: '#7A7870' };
+  if (game.game_type === 'sub_needed') return { label: 'Sub needed', color: '#F59E0B' };
   const filled = game.game_players?.length ?? 0;
   const ratio = game.max_players > 0 ? filled / game.max_players : 0;
   if (ratio >= 1) return { label: 'Full', color: '#EF4444' };

@@ -1,6 +1,6 @@
 import { Game } from '@/types';
 
-export type FilterKey = 'today' | 'weekend' | 'intermediate' | '3v3' | 'nearme';
+export type FilterKey = 'today' | 'weekend' | 'intermediate' | '3v3' | 'nearme' | 'sub_needed';
 
 export function isToday(iso: string): boolean {
   const d = new Date(iso);
@@ -28,12 +28,27 @@ export function isThisWeekend(iso: string): boolean {
 }
 
 export function applyFilters(games: Game[], active: Set<FilterKey>): Game[] {
-  if (active.size === 0) return games;
+  if (active.size === 0) {
+    return games;
+  }
+
   return games.filter((g) => {
-    if (active.has('today') && !isToday(g.starts_at)) return false;
-    if (active.has('weekend') && !isThisWeekend(g.starts_at)) return false;
-    if (active.has('intermediate') && g.skill_level !== 'intermediate') return false;
-    if (active.has('3v3') && g.game_type !== '3v3') return false;
+    if (active.has('today') && !isToday(g.starts_at)) {
+      return false;
+    }
+    if (active.has('weekend') && !isThisWeekend(g.starts_at)) {
+      return false;
+    }
+
+    if (active.has('intermediate') && g.skill_level !== 'intermediate') {
+      return false;
+    }
+    if (active.has('3v3') && g.game_type !== '3v3') {
+      return false;
+    }
+    if (active.has('sub_needed') && g.game_type !== 'sub_needed') {
+      return false;
+    }
     return true;
   });
 }
