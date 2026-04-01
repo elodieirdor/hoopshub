@@ -6,8 +6,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '../global.css';
 
+import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useFonts } from 'expo-font';
+import { storage } from '@/utils/storage';
 import { BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import {
   DMSans_400Regular,
@@ -52,16 +55,27 @@ export default function RootLayout() {
   useEffect(() => {
     loadUser();
     initLocation();
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'Default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF5C00',
+      });
+    }
   }, [loadUser, initLocation]);
 
   useEffect(() => {
     if (!fontsLoaded || isLoading) return;
     SplashScreen.hideAsync();
-    if (isAuthenticated) {
-      router.replace('/(tabs)');
-    } else {
+    if (!isAuthenticated) {
       router.replace('/(auth)/login');
+      return;
     }
+    storage.get('notification_prompt_shown').then((shown) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      router.replace((shown === 'true' ? '/(tabs)' : '/notifications-opt-in') as any);
+    });
   }, [fontsLoaded, isLoading, isAuthenticated]);
 
   if (!fontsLoaded || isLoading) return null;
@@ -82,6 +96,7 @@ export default function RootLayout() {
           >
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="notifications-opt-in" options={{ headerShown: false }} />
             <Stack.Screen name="courts/[id]" />
             <Stack.Screen name="courts/edit" options={{ title: 'Edit court' }} />
           </Stack>

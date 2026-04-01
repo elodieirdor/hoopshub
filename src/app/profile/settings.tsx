@@ -1,10 +1,13 @@
-import React from 'react';
-import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, Pressable, Alert, Switch, ActivityIndicator } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { useAuthStore } from '@/store/authStore';
+import { storage } from '@/utils/storage';
+import { requestPermissionAndGetToken } from '@/utils/notifications';
+import { registerPushToken, deletePushToken } from '@/api/notifications';
 
 function SettingsRow({
   icon,
@@ -50,6 +53,41 @@ export default function SettingsScreen() {
   const logout = useAuthStore((s) => s.logout);
   const version = Constants.expoConfig?.version ?? '—';
 
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(true);
+
+  useEffect(() => {
+    storage.get('notification_enabled').then((val) => {
+      setNotificationsEnabled(val === 'true');
+      setNotifLoading(false);
+    });
+  }, []);
+
+  const handleNotificationToggle = async (value: boolean) => {
+    setNotificationsEnabled(value);
+    try {
+      if (value) {
+        const token = await requestPermissionAndGetToken();
+        if (token) {
+          await registerPushToken(token);
+          await storage.set('notification_enabled', 'true');
+        } else {
+          setNotificationsEnabled(false);
+          Alert.alert(
+            'Notifications blocked',
+            'Enable notifications for HoopsHub in your device Settings.',
+          );
+        }
+      } else {
+        await deletePushToken();
+        await storage.set('notification_enabled', 'false');
+      }
+    } catch {
+      setNotificationsEnabled(!value);
+      Alert.alert('Error', 'Could not update notification settings. Try again.');
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert('Log out', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
@@ -89,6 +127,37 @@ export default function SettingsScreen() {
               label="Change password"
               onPress={() => router.push('/profile/password')}
             />
+          </SectionCard>
+        </View>
+
+        {/* Notifications */}
+        <View style={{ gap: 8 }}>
+          <Text
+            className="text-muted font-sans text-xs uppercase"
+            style={{ letterSpacing: 1, paddingLeft: 4 }}
+          >
+            Notifications
+          </Text>
+          <SectionCard>
+            <View className="flex-row items-center px-4 py-4 bg-surface">
+              <Ionicons
+                name="notifications-outline"
+                size={18}
+                color="#7A7870"
+                style={{ marginRight: 12 }}
+              />
+              <Text className="flex-1 text-cream font-sans text-sm">Push notifications</Text>
+              {notifLoading ? (
+                <ActivityIndicator size="small" color="#7A7870" />
+              ) : (
+                <Switch
+                  value={notificationsEnabled}
+                  onValueChange={handleNotificationToggle}
+                  trackColor={{ false: '#202020', true: '#FF5C00' }}
+                  thumbColor="#F0EDE8"
+                />
+              )}
+            </View>
           </SectionCard>
         </View>
 

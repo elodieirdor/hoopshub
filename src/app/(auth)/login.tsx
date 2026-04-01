@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { router } from 'expo-router';
 import { FormInput } from '@/components/ui/form-input';
 import { useAuthStore } from '@/store/authStore';
+import { storage } from '@/utils/storage';
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -29,7 +30,9 @@ export default function LoginScreen() {
     setError(null);
     try {
       await useAuthStore.getState().login(email, password);
-      router.replace('/(tabs)');
+      const shown = await storage.get('notification_prompt_shown');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      router.replace((shown === 'true' ? '/(tabs)' : '/notifications-opt-in') as any);
     } catch {
       setError('Invalid email or password');
     }
