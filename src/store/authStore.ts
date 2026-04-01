@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import * as AuthApi from '../api/auth';
+import { deletePushToken } from '../api/notifications';
 import { router } from 'expo-router';
 import { User } from '@/types';
 import { storage } from '@/utils/storage';
@@ -56,8 +57,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) => set({ user }),
 
   logout: async () => {
+    try {
+      await deletePushToken();
+    } catch {
+      /* swallow — non-fatal */
+    }
     await AuthApi.logout();
     await storage.delete('auth_token');
+    await storage.set('notification_enabled', 'false');
+    // notification_prompt_shown is intentionally preserved across logout
     set({ user: null, token: null, isAuthenticated: false });
     router.replace('/(auth)/login');
   },

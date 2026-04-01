@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.elodie-roomies.hoopshub",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "HoopsHub uses your location to find nearby courts."
+        "NSLocationWhenInUseUsageDescription": "HoopsHub uses your location to find nearby courts.",
+        "NSUserNotificationsUsageDescription": "HoopsHub notifies you when games open up or someone invites you to play."
       }
     },
     "android": {
@@ -25,7 +26,10 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.elodieroomies.hoopshub",
-      "permissions": ["android.permission.ACCESS_FINE_LOCATION"]
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "output": "static",
@@ -63,7 +67,8 @@
       "expo-image",
       "expo-web-browser",
       "@react-native-community/datetimepicker",
-      "expo-updates"
+      "expo-updates",
+      ["expo-notifications", { "color": "#FF5C00", "sounds": [] }]
     ],
     "experiments": {
       "typedRoutes": true,
